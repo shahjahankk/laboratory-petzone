@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=11">
+  <link rel="stylesheet" href="/api/static/styles.css?v=12">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=11"></script>
+  <script src="/api/static/app.js?v=12"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -42,20 +42,24 @@
       document.getElementById('newForPetBtn').textContent = 'New pet (same phone)';
 
       const species = report.species === 'Cat' || report.species === 'Dog' ? report.species : (report.species || '');
-      const speciesClass = species === 'Cat' ? 'species-cat' : 'species-dog';
+      const hasUs = (report.panels || []).some((p) => String(p.code).toUpperCase() === 'ULTRASOUND');
 
       const panelsHtml = (report.panels || [])
         .filter((panel) => String(panel.code).toUpperCase() !== 'SKIN_SCRAPING')
-        .filter((panel) => (panel.results || []).length > 0 || String(panel.code).toUpperCase() === 'ULTRASOUND')
         .map((panel) => {
           const isUs = String(panel.code).toUpperCase() === 'ULTRASOUND';
+          if (isUs) {
+            return `
+        <section class="report-panel">
+          <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          ${LabApp.renderUltrasoundPanelHtml()}
+        </section>`;
+          }
           const rows = panel.results || [];
-          if (!rows.length && !isUs) return '';
+          if (!rows.length) return '';
           return `
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
-          ${isUs && report.forms?.ULTRASOUND ? LabApp.renderUltrasoundTypeHtml(report.forms.ULTRASOUND) : ''}
-          ${rows.length ? `
           <table>
             <thead>
               <tr>
@@ -75,9 +79,16 @@
                 </tr>
               `).join('')}
             </tbody>
-          </table>` : ''}
+          </table>
         </section>`;
         }).join('');
+
+      const sectionTitle = hasUs && (report.panels || []).every((p) => {
+        const c = String(p.code).toUpperCase();
+        return c === 'ULTRASOUND' || c === 'SKIN_SCRAPING' || !(p.results || []).length;
+      })
+        ? 'Ultrasound'
+        : 'Investigations &amp; Results';
 
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>
@@ -97,8 +108,6 @@
           </div>
         </div>
 
-        <div class="species-banner ${speciesClass}">${LabApp.escapeHtml(species || 'Species N/A')}</div>
-
         <div class="report-section-title">Patient Information</div>
         <div class="meta-card">
           ${metaCell('Owner', report.patient_name)}
@@ -113,7 +122,7 @@
           ${metaCell('Report Date', formatDate(report.report_date))}
         </div>
 
-        <div class="report-section-title">Investigations &amp; Results</div>
+        <div class="report-section-title">${sectionTitle}</div>
         ${panelsHtml}
         ${report.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(report.forms.SKIN_SCRAPING) : ''}
 
@@ -129,7 +138,7 @@
             </div>
           </section>` : ''}
 
-        ${report.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>` : ''}
+        ${!hasUs && report.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>` : ''}
         ${report.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.remarks)}</div></div>` : ''}
 
         <div class="report-footer">

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=11">
+  <link rel="stylesheet" href="/api/static/styles.css?v=12">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -131,7 +131,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=11"></script>
+  <script src="/api/static/app.js?v=12"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -343,7 +343,7 @@
       });
 
       const notesEl = document.getElementById('doctorRemarks');
-      const clinical_notes = notesEl ? notesEl.value.trim() : (draft.clinical_notes || '');
+      const clinical_notes = notesEl ? notesEl.value.trim() : (hasUltrasound() ? '' : (draft.clinical_notes || ''));
       const forms = { ...(draft.forms || {}) };
       if (hasSkinScraping()) {
         forms.SKIN_SCRAPING = collectSkinScraping();
@@ -426,9 +426,10 @@
       `;
     }
 
-    function ultrasoundExtraHtml(draft) {
+    function ultrasoundExtraHtml() {
       return `
         <div class="us-extra" id="ultrasoundExtra">
+          <p class="hint" style="margin:0 0 12px;">On the printed report, type boxes stay <strong>unchecked</strong> and <strong>Remarks</strong> is blank so the doctor can fill by pen. Optional ticks here are for staff only and are not printed.</p>
           <label for="usImageInput">Ultrasound images</label>
           <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each).</p>
           <div class="us-upload-row">
@@ -436,10 +437,6 @@
             <button type="button" class="btn btn-primary btn-sm" id="usUploadBtn">Upload</button>
           </div>
           <div class="us-images" id="usImages"></div>
-
-          <label for="doctorRemarks" style="margin-top:16px;">Doctor remarks / notes</label>
-          <p class="hint" style="margin:0 0 8px;">Space for the doctor to write findings commentary for the printed report.</p>
-          <textarea id="doctorRemarks" placeholder="Write ultrasound remarks here...">${LabApp.escapeHtml(draft.clinical_notes || '')}</textarea>
         </div>
       `;
     }
@@ -474,13 +471,24 @@
           </div>`;
         }
 
+        if (isUs) {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${ultrasoundTypeOnlyHtml(draft)}
+            ${ultrasoundExtraHtml()}
+          </div>`;
+        }
+
         return `
         <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
           <div class="result-block-head">
             <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
             <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
           </div>
-          ${isUs ? ultrasoundTypeOnlyHtml(draft) : ''}
           <table>
             <thead>
               <tr>
@@ -495,7 +503,7 @@
               ${(panel.parameters || []).map((param) => {
                 const on = includedSet.has(Number(param.id));
                 const val = saved[param.id] || saved[String(param.id)] || '';
-                const long = isLongField(param) || isUs;
+                const long = isLongField(param);
                 const field = long
                   ? `<textarea class="val-area" ${on ? '' : 'disabled'} placeholder="Enter details...">${LabApp.escapeHtml(val)}</textarea>`
                   : `<input class="val" value="${LabApp.escapeHtml(val)}" placeholder="Value" ${on ? '' : 'disabled'}>`;
@@ -512,7 +520,6 @@
               }).join('') || '<tr><td colspan="5" class="hint">No parameters on this panel.</td></tr>'}
             </tbody>
           </table>
-          ${isUs ? ultrasoundExtraHtml(draft) : ''}
         </div>`;
       }).join('');
 
@@ -633,7 +640,7 @@
         showAlert('Add at least one test panel.');
         return;
       }
-      if (!state.included_parameter_ids.length && !hasSkinScraping()) {
+      if (!state.included_parameter_ids.length && !hasSkinScraping() && !hasUltrasound()) {
         showAlert('Keep at least one field checked to print on the report.');
         return;
       }

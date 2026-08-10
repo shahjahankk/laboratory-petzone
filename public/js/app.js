@@ -123,24 +123,46 @@ const LabApp = {
     return { ...this.emptyUltrasound(), ...((d.forms && d.forms.ULTRASOUND) || {}) };
   },
 
-  renderUltrasoundTypeHtml(data) {
-    const d = { ...this.emptyUltrasound(), ...(data || {}) };
-    const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
-    const m = (arr, key) => this.mark(has(arr, key));
-    const blank = (v) => this.escapeHtml(v || '____');
+  /** Print/preview: always blank checkboxes so doctor can tick by hand. */
+  renderUltrasoundTypeHtml(_data) {
+    const box = this.mark(false);
     return `
-      <div class="skin-section">
+      <div class="skin-section us-type-print">
         <h3>Ultrasound Type</h3>
         <div class="tick-row">
-          <span>${m(d.us_types, 'complete_abdomen')} Complete Abdomen</span>
-          <span>${m(d.us_types, 'abdominal_focused')} Abdominal Focused</span>
-          <span>${m(d.us_types, 'urinary')} Urinary Tract</span>
-          <span>${m(d.us_types, 'reproductive')} Reproductive</span>
-          <span>${m(d.us_types, 'pregnancy')} Pregnancy</span>
-          <span>${m(d.us_types, 'thoracic')} Thoracic</span>
-          <span>${m(d.us_types, 'other')} Other: ${blank(d.us_type_other)}</span>
+          <span>${box} Complete Abdomen</span>
+          <span>${box} Abdominal Focused</span>
+          <span>${box} Urinary Tract</span>
+          <span>${box} Reproductive</span>
+          <span>${box} Pregnancy</span>
+          <span>${box} Thoracic</span>
+          <span>${box} Other: ________</span>
         </div>
       </div>
+    `;
+  },
+
+  /** Empty lined remarks area for handwriting on printed ultrasound report. */
+  renderUltrasoundRemarksBlankHtml() {
+    return `
+      <div class="remarks-handwrite">
+        <strong>Remarks</strong>
+        <div class="remarks-lines" aria-hidden="true">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+      </div>
+    `;
+  },
+
+  renderUltrasoundPanelHtml() {
+    return `
+      ${this.renderUltrasoundTypeHtml()}
+      ${this.renderUltrasoundRemarksBlankHtml()}
     `;
   },
 

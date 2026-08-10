@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4 · Preview — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=11">
+  <link rel="stylesheet" href="/api/static/styles.css?v=12">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=11"></script>
+  <script src="/api/static/app.js?v=12"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -58,23 +58,28 @@
 
     function renderPreview(draft, panels) {
       const species = draft.species;
-      const speciesClass = species === 'Cat' ? 'species-cat' : 'species-dog';
       const idSet = new Set((draft.panel_ids || []).map(Number));
       const selected = panels.filter((p) => idSet.has(Number(p.id)));
       const values = draft.results || {};
       const allParamIds = selected.flatMap((p) => (p.parameters || []).map((x) => Number(x.id)));
       const included = new Set(LabApp.resolveIncludedParameterIds(allParamIds, draft));
+      const hasUs = selected.some((p) => String(p.code).toUpperCase() === 'ULTRASOUND');
 
       const panelsHtml = selected.map((panel) => {
-        if (String(panel.code).toUpperCase() === 'SKIN_SCRAPING') return '';
+        const code = String(panel.code).toUpperCase();
+        if (code === 'SKIN_SCRAPING') return '';
+        if (code === 'ULTRASOUND') {
+          return `
+        <section class="report-panel">
+          <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          ${LabApp.renderUltrasoundPanelHtml()}
+        </section>`;
+        }
         const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
-        const isUs = String(panel.code).toUpperCase() === 'ULTRASOUND';
-        if (!params.length && !isUs) return '';
+        if (!params.length) return '';
         return `
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
-          ${isUs && draft.forms?.ULTRASOUND ? LabApp.renderUltrasoundTypeHtml(draft.forms.ULTRASOUND) : ''}
-          ${params.length ? `
           <table>
             <thead>
               <tr>
@@ -94,7 +99,7 @@
                 </tr>
               `).join('')}
             </tbody>
-          </table>` : ''}
+          </table>
         </section>`;
       }).join('') || '';
 
@@ -110,6 +115,13 @@
             `).join('')}
           </div>
         </section>` : '';
+
+      const sectionTitle = hasUs && selected.every((p) => {
+        const c = String(p.code).toUpperCase();
+        return c === 'ULTRASOUND' || c === 'SKIN_SCRAPING';
+      })
+        ? 'Ultrasound'
+        : 'Investigations &amp; Results';
 
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>
@@ -128,7 +140,6 @@
             <div class="rn-date">${LabApp.escapeHtml(formatDate(draft.report_date))}</div>
           </div>
         </div>
-        <div class="species-banner ${speciesClass}">${LabApp.escapeHtml(species)}</div>
         <div class="report-section-title">Patient Information</div>
         <div class="meta-card">
           ${metaCell('Owner', draft.patient_name)}
@@ -142,11 +153,11 @@
           ${metaCell('Sample Date', formatDate(draft.sample_date))}
           ${metaCell('Report Date', formatDate(draft.report_date))}
         </div>
-        <div class="report-section-title">Investigations &amp; Results</div>
+        <div class="report-section-title">${sectionTitle}</div>
         ${panelsHtml}
         ${draft.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING) : ''}
         ${imagesHtml}
-        ${draft.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>` : ''}
+        ${!hasUs && draft.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>` : ''}
         ${draft.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>` : ''}
         <div class="report-footer">
           <div class="footer-note">

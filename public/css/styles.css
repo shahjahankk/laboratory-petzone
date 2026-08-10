@@ -505,6 +505,43 @@ table.data tr:hover td { background: #FFF8FA; }
 .remarks-body { margin-top: 4px; white-space: pre-wrap; line-height: 1.55; color: var(--report-ink); }
 .result-val { white-space: pre-wrap; }
 
+/* Ultrasound: blank remarks for pen / handwriting (medium height) */
+.remarks-handwrite {
+  margin: 10px 12px 14px;
+  border: 1.5px solid var(--report-line);
+  border-radius: 8px;
+  padding: 10px 12px 8px;
+  background: #fff;
+  page-break-inside: avoid;
+}
+.remarks-handwrite strong {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--report-muted);
+  margin-bottom: 8px;
+}
+.remarks-handwrite .remarks-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.remarks-handwrite .line {
+  height: 28px;
+  border-bottom: 1px solid #94a3b8;
+}
+.remarks-handwrite .line:last-child {
+  border-bottom-color: #cbd5e1;
+}
+.us-type-print {
+  padding: 10px 12px 4px;
+}
+.us-type-print h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
 .report-images {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -646,6 +683,7 @@ table.data tr:hover td { background: #FFF8FA; }
   }
   .report-topbar { margin: 0 0 12px; height: 6px; }
   .report-no-box,
+  .remarks-handwrite,
   .species-banner,
   .report-panel h2,
   .skin-form > h2,
