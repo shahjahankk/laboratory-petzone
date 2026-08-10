@@ -105,6 +105,37 @@ label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--gray-
   flex-wrap: wrap;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.header-brand .brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.header-brand .brand-title {
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.header-brand .brand-sub {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .header nav { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
 .hero { text-align: center; padding: 48px 16px 24px; }
