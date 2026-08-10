@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const { connectDB } = require('./config/database');
+const { connectDB, pool } = require('./config/database');
 
 const authRoutes = require('./routes/auth');
 const templatesRoutes = require('./routes/templates');
@@ -51,6 +51,31 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
+async function healthHandler(req, res) {
+  let db = 'down';
+  let dbError = null;
+  try {
+    await pool.query('SELECT 1 AS ok');
+    db = 'up';
+  } catch (err) {
+    dbError = err.message;
+  }
+
+  const ok = db === 'up';
+  res.status(ok ? 200 : 503).json({
+    success: ok,
+    service: 'PetZone Laboratory',
+    time: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
+    node: process.version,
+    database: db,
+    ...(dbError ? { dbError } : {}),
+  });
+}
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
+
 app.use('/api/auth/login', rateLimit({
   windowMs: 60 * 1000,
   max: 20,
@@ -62,10 +87,6 @@ app.use('/api/templates', templatesRoutes);
 app.use('/api/reports', reportsRoutes);
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/api/health', (req, res) => {
-  res.json({ success: true, service: 'PetZone Laboratory', time: new Date().toISOString() });
-});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
