@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=13">
+  <title>Print Report â€” PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=15">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=13"></script>
+  <script src="/api/static/app.js?v=15"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -31,11 +31,11 @@
     }
 
     function metaCell(label, value) {
-      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || '—')}</span></div>`;
+      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || 'â€”')}</span></div>`;
     }
 
     function renderReport(report) {
-      document.title = `${report.report_no} — PetZone Laboratory`;
+      document.title = `${report.report_no} â€” PetZone Laboratory`;
       document.getElementById('editBtn').href = `/report/${report.id}/edit`;
       document.getElementById('newForPetBtn').href =
         `/report/new?fresh=1&patient=${encodeURIComponent(report.owner_phone || report.pet_name || report.patient_name || '')}`;
@@ -51,7 +51,7 @@
           if (isUs) {
             return `
         <section class="report-panel">
-          <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          <h2>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h2>
           ${LabApp.renderUltrasoundPanelHtml()}
         </section>`;
           }
@@ -59,23 +59,23 @@
           if (!rows.length) return '';
           return `
         <section class="report-panel">
-          <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          <h2>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h2>
           <table>
             <thead>
               <tr>
                 <th class="col-name">Investigation</th>
                 <th class="col-result">Result</th>
                 <th class="col-unit">Unit</th>
-                <th class="col-ref">Reference (${LabApp.escapeHtml(species || '—')})</th>
+                <th class="col-ref">Reference (${LabApp.escapeHtml(species || 'â€”')})</th>
               </tr>
             </thead>
             <tbody>
               ${rows.map((r) => `
                 <tr>
                   <td>${LabApp.escapeHtml(r.name)}</td>
-                  <td class="result-val">${LabApp.escapeHtml(r.value || '—')}</td>
-                  <td>${LabApp.escapeHtml(r.unit || '—')}</td>
-                  <td>${LabApp.escapeHtml(r.reference_range || '—')}</td>
+                  <td class="result-val">${LabApp.escapeHtml(r.value || 'â€”')}</td>
+                  <td>${LabApp.escapeHtml(r.unit || 'â€”')}</td>
+                  <td>${LabApp.escapeHtml(r.reference_range || 'â€”')}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -98,8 +98,9 @@
             <div>
               <h1>PetZone Laboratory</h1>
               <div class="sub">Diagnostic Laboratory Report</div>
-              <div class="lab-tagline">PetZone Hospital · Veterinary Diagnostics</div>
-              <div class="report-meta-line">${LabApp.escapeHtml(report.report_no)}${formatDate(report.report_date) ? ` · ${LabApp.escapeHtml(formatDate(report.report_date))}` : ''}</div>
+              <div class="lab-tagline">PetZone Hospital Â· Veterinary Diagnostics</div>
+              <div class="report-datetime"><span class="dt-label">Date &amp; Time</span>${LabApp.escapeHtml(LabApp.formatReportDateTime(report.report_date, report.created_at))}</div>
+              <div class="report-meta-line">${LabApp.escapeHtml(report.report_no)}</div>
             </div>
           </div>
         </div>
@@ -131,7 +132,8 @@
           <div class="footer-note">
             For veterinary diagnostic use only. Correlate with clinical findings.<br>
             Reference ranges shown are for <strong>${LabApp.escapeHtml(species || 'selected species')}</strong>.
-            ${report.created_by_name ? `<br>Prepared by: ${LabApp.escapeHtml(report.created_by_name)}` : ''}
+            ${report.created_by_name ? `<br>Prepared by: ${LabApp.escapeHtml(report.created_by_name)}` : ''}<br>
+            <span class="footer-legal">For veterinary treatment purposes. Not intended as a legal or court document.</span>
           </div>
           <div class="sign-box">
             <div class="sign-line"></div>

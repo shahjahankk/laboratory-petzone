@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Tests — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=13">
+  <title>Manage Tests â€” PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=15">
   <style>
     .inactive-tag {
       display: inline-block; margin-left: 6px; padding: 1px 7px;
@@ -70,7 +70,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=13"></script>
+  <script src="/api/static/app.js?v=15"></script>
   <script>
     let panels = [];
     let selectedId = null; // panel id or 'new'
@@ -173,7 +173,7 @@
       return `
         <div class="panel-head" style="margin-bottom:12px;">
           <h3 class="section-title" style="margin:0;">
-            ${esc(panel.code)} — ${esc(panel.name)}
+            ${esc(panel.code)} â€” ${esc(panel.name)}
             ${active ? '' : '<span class="inactive-tag">Inactive</span>'}
           </h3>
           <p class="hint" style="margin:6px 0 0;">Edit panel details and parameters below.</p>
@@ -232,7 +232,7 @@
                     </button>
                   </td>
                 </tr>
-              `).join('') : `<tr><td colspan="8" class="hint">No parameters yet — add one below.</td></tr>`}
+              `).join('') : `<tr><td colspan="8" class="hint">No parameters yet â€” add one below.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -249,7 +249,7 @@
           </div>
           <div>
             <label>Unit</label>
-            <input name="unit" placeholder="e.g. µg/dL" maxlength="40">
+            <input name="unit" placeholder="e.g. Âµg/dL" maxlength="40">
           </div>
           <div>
             <label>Dog ref</label>
@@ -355,7 +355,7 @@
               display_order: document.getElementById('newPanelOrder').value,
             },
           });
-          showOk('Panel created — now add parameters');
+          showOk('Panel created â€” now add parameters');
           await loadPanels(data.panel?.id || 'new');
         } catch (err) {
           showAlert(err.message);

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=13">
+  <title>Step 3 Â· Results â€” PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=15">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -97,7 +97,7 @@
 
   <div class="container" style="max-width:960px;">
     <h2 style="color:var(--blue);">Enter Results</h2>
-    <p class="hint" style="margin-bottom:16px;">Step 3 of 4 — Uncheck fields you do not want on the printed report</p>
+    <p class="hint" style="margin-bottom:16px;">Step 3 of 4 â€” Uncheck fields you do not want on the printed report</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
     <div id="okAlert" class="alert alert-ok" style="display:none;"></div>
@@ -116,7 +116,7 @@
         </button>
         <div id="addTestsPanel" class="add-tests-panel">
           <h4>Add another report panel</h4>
-          <p class="hint" style="margin-bottom:10px;">Select a panel to append — current values stay saved.</p>
+          <p class="hint" style="margin-bottom:10px;">Select a panel to append â€” current values stay saved.</p>
           <div class="grid-3" id="extraPanelChecks"></div>
           <div style="margin-top:10px;">
             <button type="button" class="btn btn-outline btn-sm" id="closeAddTestsBtn">Close</button>
@@ -126,12 +126,12 @@
     </div>
 
     <div class="wizard-nav">
-      <a href="/report/new/tests" class="btn btn-outline">← Back: Tests</a>
-      <button type="button" class="btn btn-primary" id="nextBtn">Next: Preview Report →</button>
+      <a href="/report/new/tests" class="btn btn-outline">â† Back: Tests</a>
+      <button type="button" class="btn btn-primary" id="nextBtn">Next: Preview Report â†’</button>
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=13"></script>
+  <script src="/api/static/app.js?v=15"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -151,8 +151,8 @@
     }
 
     function refFor(param, sp) {
-      if (sp === 'Cat') return param.reference_range_cat || param.reference_range || '—';
-      return param.reference_range_dog || param.reference_range || '—';
+      if (sp === 'Cat') return param.reference_range_cat || param.reference_range || 'â€”';
+      return param.reference_range_dog || param.reference_range || 'â€”';
     }
 
     function syncRowState(tr) {
@@ -429,7 +429,7 @@
     function ultrasoundExtraHtml() {
       return `
         <div class="us-extra" id="ultrasoundExtra">
-          <p class="hint" style="margin:0 0 12px;">Tick the ultrasound type(s) below — they appear on the <strong>right of the Images</strong> bar on the printed report (checkboxes are not printed). Remarks stay blank for handwriting.</p>
+          <p class="hint" style="margin:0 0 12px;">Tick the ultrasound type(s) below â€” they appear on the <strong>right of the Images</strong> bar on the printed report (checkboxes are not printed). Remarks stay blank for handwriting.</p>
           <label for="usImageInput">Ultrasound images</label>
           <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each).</p>
           <div class="us-upload-row">
@@ -464,7 +464,7 @@
           return `
           <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
             <div class="result-block-head">
-              <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+              <h3>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h3>
               <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
             </div>
             ${skinScrapingFormHtml(LabApp.getSkinScraping(draft))}
@@ -475,7 +475,7 @@
           return `
           <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
             <div class="result-block-head">
-              <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+              <h3>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h3>
               <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
             </div>
             ${ultrasoundTypeOnlyHtml(draft)}
@@ -486,7 +486,7 @@
         return `
         <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
           <div class="result-block-head">
-            <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+            <h3>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h3>
             <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
           </div>
           <table>
@@ -514,7 +514,7 @@
                   </td>
                   <td>${LabApp.escapeHtml(param.name)}</td>
                   <td>${field}</td>
-                  <td>${LabApp.escapeHtml(param.unit || '—')}</td>
+                  <td>${LabApp.escapeHtml(param.unit || 'â€”')}</td>
                   <td>${LabApp.escapeHtml(refFor(param, species))}</td>
                 </tr>`;
               }).join('') || '<tr><td colspan="5" class="hint">No parameters on this panel.</td></tr>'}
@@ -707,7 +707,7 @@
         document.getElementById('logoutBtn').onclick = () => LabApp.logout();
         document.getElementById('stepper').innerHTML = LabApp.renderStepper(3);
         document.getElementById('summary').innerHTML =
-          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> · Species: <strong>${LabApp.escapeHtml(draft.species)}</strong>`;
+          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> Â· Species: <strong>${LabApp.escapeHtml(draft.species)}</strong>`;
 
         const tpl = await LabApp.api('/api/templates');
         allPanels = tpl.panels || [];

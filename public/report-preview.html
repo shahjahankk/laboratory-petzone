@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 4 · Preview — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=13">
+  <title>Step 4 Â· Preview â€” PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=15">
 </head>
 <body>
   <header class="header no-print">
@@ -18,11 +18,11 @@
   <div class="container">
     <div class="no-print">
       <h2 style="color:var(--blue);">Report Preview</h2>
-      <p class="hint" style="margin-bottom:16px;">Step 4 of 4 — Review, then save &amp; print</p>
+      <p class="hint" style="margin-bottom:16px;">Step 4 of 4 â€” Review, then save &amp; print</p>
       <div id="stepper"></div>
       <div id="alert" class="alert alert-error" style="display:none;"></div>
       <div class="wizard-nav" style="margin-bottom:16px;">
-        <a href="/report/new/results" class="btn btn-outline">← Back: Results</a>
+        <a href="/report/new/results" class="btn btn-outline">â† Back: Results</a>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button type="button" class="btn btn-outline" id="saveOnlyBtn">Save Only</button>
           <button type="button" class="btn btn-primary" id="savePrintBtn">Save &amp; Print</button>
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=13"></script>
+  <script src="/api/static/app.js?v=15"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -44,16 +44,16 @@
     }
 
     function formatDate(v) {
-      return v ? String(v).slice(0, 10) : '—';
+      return v ? String(v).slice(0, 10) : 'â€”';
     }
 
     function metaCell(label, value) {
-      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || '—')}</span></div>`;
+      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || 'â€”')}</span></div>`;
     }
 
     function refFor(param, species) {
-      if (species === 'Cat') return param.reference_range_cat || param.reference_range || '—';
-      return param.reference_range_dog || param.reference_range || '—';
+      if (species === 'Cat') return param.reference_range_cat || param.reference_range || 'â€”';
+      return param.reference_range_dog || param.reference_range || 'â€”';
     }
 
     function renderPreview(draft, panels) {
@@ -71,7 +71,7 @@
         if (code === 'ULTRASOUND') {
           return `
         <section class="report-panel">
-          <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          <h2>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h2>
           ${LabApp.renderUltrasoundPanelHtml()}
         </section>`;
         }
@@ -79,7 +79,7 @@
         if (!params.length) return '';
         return `
         <section class="report-panel">
-          <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          <h2>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h2>
           <table>
             <thead>
               <tr>
@@ -93,8 +93,8 @@
               ${params.map((param) => `
                 <tr>
                   <td>${LabApp.escapeHtml(param.name)}</td>
-                  <td class="result-val">${LabApp.escapeHtml(values[param.id] || values[String(param.id)] || '—')}</td>
-                  <td>${LabApp.escapeHtml(param.unit || '—')}</td>
+                  <td class="result-val">${LabApp.escapeHtml(values[param.id] || values[String(param.id)] || 'â€”')}</td>
+                  <td>${LabApp.escapeHtml(param.unit || 'â€”')}</td>
                   <td>${LabApp.escapeHtml(refFor(param, species))}</td>
                 </tr>
               `).join('')}
@@ -123,7 +123,8 @@
             <div>
               <h1>PetZone Laboratory</h1>
               <div class="sub">Diagnostic Laboratory Report</div>
-              <div class="lab-tagline">PetZone Hospital · Veterinary Diagnostics</div>
+              <div class="lab-tagline">PetZone Hospital Â· Veterinary Diagnostics</div>
+              <div class="report-datetime"><span class="dt-label">Date &amp; Time</span>${LabApp.escapeHtml(LabApp.formatReportDateTime(draft.report_date))}</div>
             </div>
           </div>
         </div>
@@ -149,7 +150,8 @@
         <div class="report-footer">
           <div class="footer-note">
             For veterinary diagnostic use only. Correlate with clinical findings.<br>
-            Reference ranges shown are for <strong>${LabApp.escapeHtml(species)}</strong>.
+            Reference ranges shown are for <strong>${LabApp.escapeHtml(species)}</strong>.<br>
+            <span class="footer-legal">For veterinary treatment purposes. Not intended as a legal or court document.</span>
           </div>
           <div class="sign-box">
             <div class="sign-line"></div>

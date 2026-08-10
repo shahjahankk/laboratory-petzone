@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 2 · Tests — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=13">
+  <title>Step 2 Â· Tests â€” PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=15">
 </head>
 <body>
   <header class="header">
@@ -17,7 +17,7 @@
 
   <div class="container" style="max-width:920px;">
     <h2 style="color:var(--blue);">Select Tests</h2>
-    <p class="hint" style="margin-bottom:16px;">Step 2 of 4 — Choose report panels</p>
+    <p class="hint" style="margin-bottom:16px;">Step 2 of 4 â€” Choose report panels</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
 
@@ -27,12 +27,12 @@
     </div>
 
     <div class="wizard-nav">
-      <a href="/report/new" class="btn btn-outline" id="backBtn">← Back: Patient</a>
-      <button type="button" class="btn btn-primary" id="nextBtn">Next: Enter Results →</button>
+      <a href="/report/new" class="btn btn-outline" id="backBtn">â† Back: Patient</a>
+      <button type="button" class="btn btn-primary" id="nextBtn">Next: Enter Results â†’</button>
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=13"></script>
+  <script src="/api/static/app.js?v=15"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -71,7 +71,7 @@
         document.getElementById('logoutBtn').onclick = () => LabApp.logout();
         document.getElementById('stepper').innerHTML = LabApp.renderStepper(2);
         document.getElementById('patientSummary').innerHTML =
-          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> · ${LabApp.escapeHtml(draft.species)} · ${LabApp.escapeHtml(draft.patient_name)}`;
+          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> Â· ${LabApp.escapeHtml(draft.species)} Â· ${LabApp.escapeHtml(draft.patient_name)}`;
 
         const tpl = await LabApp.api('/api/templates');
         const panels = tpl.panels || [];

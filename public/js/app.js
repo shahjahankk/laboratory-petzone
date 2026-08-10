@@ -77,6 +77,40 @@ const LabApp = {
     return new Date().toISOString().slice(0, 10);
   },
 
+  /**
+   * Date + time stamp for printed reports.
+   * Prefers created_at (has time); else report_date + current clock time.
+   */
+  formatReportDateTime(reportDate, createdAt) {
+    let d = null;
+    if (createdAt) {
+      const parsed = new Date(createdAt);
+      if (!Number.isNaN(parsed.getTime())) d = parsed;
+    }
+    if (!d && reportDate) {
+      const day = String(reportDate).slice(0, 10);
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const parsed = new Date(`${day}T${hh}:${mm}:${ss}`);
+      if (!Number.isNaN(parsed.getTime())) d = parsed;
+    }
+    if (!d) d = new Date();
+
+    const datePart = d.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timePart = d.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return `${datePart} · ${timePart}`;
+  },
+
   escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')

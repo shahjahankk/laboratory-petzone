@@ -346,11 +346,28 @@ table.data tr:hover td { background: #FFF8FA; }
   color: var(--report-muted);
   text-align: center;
 }
+.report-header .report-datetime {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--report-ink);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+.report-header .report-datetime .dt-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--report-muted);
+  margin-right: 6px;
+}
 .report-header .report-meta-line {
   margin-top: 4px;
   font-size: 12px;
   color: var(--report-muted);
   font-weight: 600;
+  text-align: center;
 }
 
 .report-no-box {
@@ -668,6 +685,14 @@ table.data tr:hover td { background: #FFF8FA; }
   align-items: flex-end;
 }
 .report-footer .footer-note { max-width: 62%; line-height: 1.5; }
+.report-footer .footer-legal {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--report-muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
 .sign-box { text-align: center; min-width: 200px; font-size: 12px; color: var(--report-ink); }
 .sign-line {
   border-bottom: 1.5px solid var(--report-line);

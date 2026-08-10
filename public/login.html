@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=13">
+  <title>Login â€” PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=15">
 </head>
 <body>
   <header class="header">
@@ -34,10 +34,10 @@
         <div class="form-group">
           <label for="password">Password</label>
           <div class="password-wrap" style="position:relative; width:100%;">
-            <input id="password" name="password" type="password" required minlength="6" placeholder="••••••••" autocomplete="current-password" style="width:100%; padding-right:52px; box-sizing:border-box;">
+            <input id="password" name="password" type="password" required minlength="6" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" style="width:100%; padding-right:52px; box-sizing:border-box;">
             <button type="button" id="togglePassword" aria-label="Show password" title="Show password"
               style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:36px; height:36px; border:none; background:transparent; color:#6B7280; cursor:pointer; font-size:18px; line-height:1; padding:0; margin:0; box-shadow:none; outline:none;">
-              <span id="eyeIcon">👁</span>
+              <span id="eyeIcon">ðŸ‘</span>
             </button>
           </div>
         </div>
@@ -46,7 +46,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=13"></script>
+  <script src="/api/static/app.js?v=15"></script>
   <script>
     let needsSetup = false;
 
@@ -101,7 +101,7 @@
       const btn = document.getElementById('togglePassword');
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      icon.textContent = show ? '🙈' : '👁';
+      icon.textContent = show ? 'ðŸ™ˆ' : 'ðŸ‘';
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
       btn.title = show ? 'Hide password' : 'Show password';
     });
