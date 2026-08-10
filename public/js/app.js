@@ -185,28 +185,31 @@ const LabApp = {
   },
 
   formatUltrasoundTypeText(data) {
-    return this.ultrasoundTypeLabels(data).join(' · ');
+    return this.ultrasoundTypeLabels(data).join(' / ');
   },
 
-  /** Blank lined remarks for handwriting (no checkboxes on print). */
-  renderUltrasoundRemarksBlankHtml() {
+  /** Empty lined field for handwriting on printed ultrasound report. */
+  renderHandwriteBoxHtml(title, lines = 5) {
+    const rows = Array.from({ length: Math.max(2, Number(lines) || 4) })
+      .map(() => '<div class="line"></div>')
+      .join('');
     return `
       <div class="remarks-handwrite">
-        <strong>Remarks</strong>
-        <div class="remarks-lines" aria-hidden="true">
-          <div class="line"></div>
-          <div class="line"></div>
-          <div class="line"></div>
-          <div class="line"></div>
-          <div class="line"></div>
-          <div class="line"></div>
-        </div>
+        <strong>${this.escapeHtml(title)}</strong>
+        <div class="remarks-lines" aria-hidden="true">${rows}</div>
       </div>
     `;
   },
 
+  /** Blank ultrasound fields for doctor to fill by hand. */
   renderUltrasoundPanelHtml() {
-    return this.renderUltrasoundRemarksBlankHtml();
+    return `
+      ${this.renderHandwriteBoxHtml('Name', 2)}
+      ${this.renderHandwriteBoxHtml('Clinical History', 3)}
+      ${this.renderHandwriteBoxHtml('Result', 4)}
+      ${this.renderHandwriteBoxHtml('Impression', 3)}
+      ${this.renderHandwriteBoxHtml('Remarks', 3)}
+    `;
   },
 
   renderUltrasoundImagesHtml(images, usForm) {

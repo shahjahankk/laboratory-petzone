@@ -319,7 +319,7 @@ table.data tr:hover td { background: #FFF8FA; }
   justify-content: flex-start;
 }
 .report-header .rh-left img {
-  height: 68px;
+  height: 92px;
   width: auto;
   display: block;
 }
@@ -567,10 +567,10 @@ table.data tr:hover td { background: #FFF8FA; }
 
 /* Ultrasound: blank remarks for pen / handwriting (medium height) */
 .remarks-handwrite {
-  margin: 10px 12px 14px;
+  margin: 8px 10px 10px;
   border: 1.5px solid var(--report-line);
   border-radius: 8px;
-  padding: 10px 12px 8px;
+  padding: 8px 10px 6px;
   background: #fff;
   page-break-inside: avoid;
 }
@@ -580,7 +580,7 @@ table.data tr:hover td { background: #FFF8FA; }
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--report-muted);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .remarks-handwrite .remarks-lines {
   display: flex;
@@ -588,11 +588,17 @@ table.data tr:hover td { background: #FFF8FA; }
   gap: 0;
 }
 .remarks-handwrite .line {
-  height: 24px;
+  height: 22px;
   border-bottom: 1px solid #94a3b8;
 }
 .remarks-handwrite .line:last-child {
   border-bottom-color: #cbd5e1;
+}
+.report-panel .remarks-handwrite:first-of-type {
+  margin-top: 10px;
+}
+.report-panel .remarks-handwrite:last-of-type {
+  margin-bottom: 12px;
 }
 .us-type-print {
   padding: 10px 12px 4px;
@@ -766,9 +772,9 @@ table.data tr:hover td { background: #FFF8FA; }
     margin-bottom: 6px !important;
   }
   .report-header .rh-left { justify-content: flex-start !important; }
-  .report-header .rh-left img { height: 42px !important; }
+  .report-header .rh-left img { height: 64px !important; }
   .report-header .rh-center { text-align: center !important; }
-  .report-header .rh-center h1 { font-size: 16px !important; text-align: center !important; }
+  .report-header .rh-center h1 { font-size: 17px !important; text-align: center !important; }
   .report-header .rh-center .sub { font-size: 8px !important; margin-top: 2px !important; text-align: center !important; }
   .report-header .rh-right { text-align: right !important; justify-self: end !important; }
   .report-header .rh-right .dt-label { font-size: 7px !important; margin-bottom: 1px !important; }
@@ -819,16 +825,18 @@ table.data tr:hover td { background: #FFF8FA; }
 
   /* Handwriting remarks — keep short */
   .remarks-handwrite {
-    margin: 6px 8px 8px !important;
-    padding: 6px 8px 4px !important;
+    margin: 4px 8px 6px !important;
+    padding: 5px 8px 3px !important;
     border-radius: 6px !important;
     page-break-inside: avoid !important;
   }
   .remarks-handwrite strong {
     font-size: 9px !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 3px !important;
   }
-  .remarks-handwrite .line { height: 20px !important; }
+  .remarks-handwrite .line { height: 15px !important; }
+  .report-panel .remarks-handwrite:first-of-type { margin-top: 6px !important; }
+  .report-panel .remarks-handwrite:last-of-type { margin-bottom: 8px !important; }
   .remarks-box {
     padding: 6px 8px !important;
     margin-bottom: 6px !important;
@@ -848,7 +856,7 @@ table.data tr:hover td { background: #FFF8FA; }
     page-break-inside: avoid !important;
   }
   .report-image img {
-    max-height: 120px !important;
+    max-height: 95px !important;
     object-fit: contain !important;
   }
 
