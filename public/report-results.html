@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=9">
+  <link rel="stylesheet" href="/api/static/styles.css?v=10">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -131,7 +131,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=9"></script>
+  <script src="/api/static/app.js?v=10"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -348,6 +348,12 @@
       if (hasSkinScraping()) {
         forms.SKIN_SCRAPING = collectSkinScraping();
       }
+      if (hasUltrasound()) {
+        forms.ULTRASOUND = {
+          us_types: collectChecked('us_type'),
+          us_type_other: document.getElementById('us_type_other')?.value.trim() || '',
+        };
+      }
 
       return {
         panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
@@ -394,8 +400,33 @@
       `).join('');
     }
 
+    function ultrasoundTypeOnlyHtml(draft) {
+      const us = LabApp.getUltrasound(draft);
+      const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
+      return `
+        <div class="us-extra" style="border-top:0; border-bottom:1px solid var(--gray-200);">
+          <div class="skin-editor" style="padding:0; background:transparent;">
+            <h4 style="margin-top:0;">Ultrasound Type</h4>
+            <div class="field-row">
+              <div class="tick-grid" id="usTypeTicks">
+                <label><input type="checkbox" name="us_type" value="complete_abdomen" ${on(us.us_types, 'complete_abdomen') ? 'checked' : ''}> Complete Abdomen</label>
+                <label><input type="checkbox" name="us_type" value="abdominal_focused" ${on(us.us_types, 'abdominal_focused') ? 'checked' : ''}> Abdominal Focused</label>
+                <label><input type="checkbox" name="us_type" value="urinary" ${on(us.us_types, 'urinary') ? 'checked' : ''}> Urinary Tract</label>
+                <label><input type="checkbox" name="us_type" value="reproductive" ${on(us.us_types, 'reproductive') ? 'checked' : ''}> Reproductive</label>
+                <label><input type="checkbox" name="us_type" value="pregnancy" ${on(us.us_types, 'pregnancy') ? 'checked' : ''}> Pregnancy</label>
+                <label><input type="checkbox" name="us_type" value="thoracic" ${on(us.us_types, 'thoracic') ? 'checked' : ''}> Thoracic</label>
+                <label class="inline-other">
+                  <input type="checkbox" name="us_type" value="other" ${on(us.us_types, 'other') ? 'checked' : ''}> Other:
+                  <input type="text" id="us_type_other" value="${LabApp.escapeHtml(us.us_type_other || '')}" placeholder="specify">
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function ultrasoundExtraHtml(draft) {
-      if (!hasUltrasound()) return '';
       return `
         <div class="us-extra" id="ultrasoundExtra">
           <label for="usImageInput">Ultrasound images</label>
@@ -449,6 +480,7 @@
             <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
             <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
           </div>
+          ${isUs ? ultrasoundTypeOnlyHtml(draft) : ''}
           <table>
             <thead>
               <tr>
@@ -543,7 +575,10 @@
       const patch = { panel_ids, results, included_parameter_ids: included, parameter_ids_snapshot: snapshot };
       if (panel && String(panel.code).toUpperCase() === 'ULTRASOUND') {
         patch.clinical_notes = '';
-        patch.images = draft.images || [];
+        patch.images = [];
+        const forms = { ...(draft.forms || {}) };
+        delete forms.ULTRASOUND;
+        patch.forms = forms;
       }
       if (panel && String(panel.code).toUpperCase() === 'SKIN_SCRAPING') {
         const forms = { ...(draft.forms || {}) };

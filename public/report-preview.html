@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4 · Preview — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=9">
+  <link rel="stylesheet" href="/api/static/styles.css?v=10">
 </head>
 <body>
   <header class="header no-print">
@@ -33,7 +33,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Building preview...</div>
   </div>
 
-  <script src="/api/static/app.js?v=9"></script>
+  <script src="/api/static/app.js?v=10"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -66,10 +66,13 @@
       const panelsHtml = selected.map((panel) => {
         if (String(panel.code).toUpperCase() === 'SKIN_SCRAPING') return '';
         const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
-        if (!params.length) return '';
+        const isUs = String(panel.code).toUpperCase() === 'ULTRASOUND';
+        if (!params.length && !isUs) return '';
         return `
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          ${isUs && draft.forms?.ULTRASOUND ? LabApp.renderUltrasoundTypeHtml(draft.forms.ULTRASOUND) : ''}
+          ${params.length ? `
           <table>
             <thead>
               <tr>
@@ -89,7 +92,7 @@
                 </tr>
               `).join('')}
             </tbody>
-          </table>
+          </table>` : ''}
         </section>`;
       }).join('') || '';
 

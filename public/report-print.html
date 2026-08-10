@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=9">
+  <link rel="stylesheet" href="/api/static/styles.css?v=10">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=9"></script>
+  <script src="/api/static/app.js?v=10"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -46,10 +46,16 @@
 
       const panelsHtml = (report.panels || [])
         .filter((panel) => String(panel.code).toUpperCase() !== 'SKIN_SCRAPING')
-        .filter((panel) => (panel.results || []).length > 0)
-        .map((panel) => `
+        .filter((panel) => (panel.results || []).length > 0 || String(panel.code).toUpperCase() === 'ULTRASOUND')
+        .map((panel) => {
+          const isUs = String(panel.code).toUpperCase() === 'ULTRASOUND';
+          const rows = panel.results || [];
+          if (!rows.length && !isUs) return '';
+          return `
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
+          ${isUs && report.forms?.ULTRASOUND ? LabApp.renderUltrasoundTypeHtml(report.forms.ULTRASOUND) : ''}
+          ${rows.length ? `
           <table>
             <thead>
               <tr>
@@ -60,7 +66,7 @@
               </tr>
             </thead>
             <tbody>
-              ${(panel.results || []).map((r) => `
+              ${rows.map((r) => `
                 <tr>
                   <td>${LabApp.escapeHtml(r.name)}</td>
                   <td class="result-val">${LabApp.escapeHtml(r.value || '—')}</td>
@@ -69,9 +75,9 @@
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-        </section>
-      `).join('');
+          </table>` : ''}
+        </section>`;
+        }).join('');
 
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>

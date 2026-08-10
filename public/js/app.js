@@ -1,7 +1,7 @@
 const LabApp = {
   tokenKey: 'lab_token',
   draftKey: 'lab_report_draft',
-  version: 9,
+  version: 10,
 
   getToken() {
     return localStorage.getItem(this.tokenKey) || '';
@@ -109,6 +109,39 @@ const LabApp = {
       images: [],
       forms: {},
     };
+  },
+
+  emptyUltrasound() {
+    return {
+      us_types: [],
+      us_type_other: '',
+    };
+  },
+
+  getUltrasound(draft) {
+    const d = draft || this.getDraft();
+    return { ...this.emptyUltrasound(), ...((d.forms && d.forms.ULTRASOUND) || {}) };
+  },
+
+  renderUltrasoundTypeHtml(data) {
+    const d = { ...this.emptyUltrasound(), ...(data || {}) };
+    const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
+    const m = (arr, key) => this.mark(has(arr, key));
+    const blank = (v) => this.escapeHtml(v || '____');
+    return `
+      <div class="skin-section">
+        <h3>Ultrasound Type</h3>
+        <div class="tick-row">
+          <span>${m(d.us_types, 'complete_abdomen')} Complete Abdomen</span>
+          <span>${m(d.us_types, 'abdominal_focused')} Abdominal Focused</span>
+          <span>${m(d.us_types, 'urinary')} Urinary Tract</span>
+          <span>${m(d.us_types, 'reproductive')} Reproductive</span>
+          <span>${m(d.us_types, 'pregnancy')} Pregnancy</span>
+          <span>${m(d.us_types, 'thoracic')} Thoracic</span>
+          <span>${m(d.us_types, 'other')} Other: ${blank(d.us_type_other)}</span>
+        </div>
+      </div>
+    `;
   },
 
   emptySkinScraping() {
