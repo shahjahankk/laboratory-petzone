@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Report — PetZone Laboratory</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header no-print">
+    <a href="/dashboard"><img src="/assets/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/assets/petzonelogo.svg'"></a>
+    <nav>
+      <a href="/dashboard" class="btn btn-outline btn-sm">Back to List</a>
+      <button class="btn btn-outline btn-sm" id="logoutBtn">Logout</button>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h2 style="color:var(--blue); margin-bottom:16px;" id="pageTitle">New Lab Report</h2>
+    <div id="alert" class="alert alert-error" style="display:none;"></div>
+
+    <form id="reportForm">
+      <div class="card" style="margin-bottom:16px;">
+        <h3 class="section-title">Patient Details</h3>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>Owner / Patient Name *</label>
+            <input name="patient_name" required>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input name="owner_phone">
+          </div>
+          <div class="form-group">
+            <label>Referring Vet</label>
+            <input name="referring_vet">
+          </div>
+          <div class="form-group">
+            <label>Pet Name *</label>
+            <input name="pet_name" required>
+          </div>
+          <div class="form-group">
+            <label>Species</label>
+            <select name="species">
+              <option value="">Select</option>
+              <option>Canine</option>
+              <option>Feline</option>
+              <option>Avian</option>
+              <option>Rabbit</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Breed</label>
+            <input name="breed">
+          </div>
+          <div class="form-group">
+            <label>Age</label>
+            <input name="age" placeholder="e.g. 3 years">
+          </div>
+          <div class="form-group">
+            <label>Sex</label>
+            <select name="sex">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Male Neutered</option>
+              <option>Female Spayed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sample Date</label>
+            <input type="date" name="sample_date">
+          </div>
+          <div class="form-group">
+            <label>Report Date</label>
+            <input type="date" name="report_date" id="report_date">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status">
+              <option value="final">Final</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Clinical Notes</label>
+            <textarea name="clinical_notes" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Lab Remarks</label>
+            <textarea name="remarks" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <h3 class="section-title">Select Tests</h3>
+        <div class="grid-3" id="panelChecks"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <h3 class="section-title">Enter Results</h3>
+        <p class="hint" style="margin-bottom:12px;">Same table pattern for every panel — Parameter / Result / Unit / Reference / Flag</p>
+        <div id="resultsArea"></div>
+      </div>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px;">
+        <button type="submit" class="btn btn-primary" id="saveBtn">Save Report</button>
+        <a href="/dashboard" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let panels = [];
+    let editId = null;
+    const valuesMap = {};
+
+    function pathEditId() {
+      const parts = location.pathname.split('/').filter(Boolean);
+      // /report/:id/edit
+      if (parts[0] === 'report' && parts[2] === 'edit') return parts[1];
+      return null;
+    }
+
+    function selectedPanelIds() {
+      return [...document.querySelectorAll('input[name="panel_id"]:checked')].map((el) => Number(el.value));
+    }
+
+    function renderPanelChecks(selected = []) {
+      const box = document.getElementById('panelChecks');
+      box.innerHTML = panels.map((p) => {
+        const checked = selected.includes(p.id);
+        return `
+          <label class="panel-check ${checked ? 'active' : ''}">
+            <input type="checkbox" name="panel_id" value="${p.id}" ${checked ? 'checked' : ''}>
+            <span>
+              <strong>${LabApp.escapeHtml(p.code)}</strong><br>
+              <small style="color:var(--gray-500)">${LabApp.escapeHtml(p.name)}</small>
+            </span>
+          </label>
+        `;
+      }).join('');
+
+      box.querySelectorAll('input[name="panel_id"]').forEach((input) => {
+        input.addEventListener('change', () => {
+          input.closest('.panel-check').classList.toggle('active', input.checked);
+          renderResults();
+        });
+      });
+    }
+
+    function renderResults() {
+      const ids = selectedPanelIds();
+      const area = document.getElementById('resultsArea');
+      const selected = panels.filter((p) => ids.includes(p.id));
+
+      if (!selected.length) {
+        area.innerHTML = '<p class="hint">Select one or more tests above to enter results.</p>';
+        return;
+      }
+
+      area.innerHTML = selected.map((panel) => `
+        <div class="result-block" data-panel="${panel.id}">
+          <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:28%">Parameter</th>
+                <th style="width:18%">Result</th>
+                <th style="width:12%">Unit</th>
+                <th style="width:18%">Reference</th>
+                <th style="width:12%">Flag</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${panel.parameters.map((param) => {
+                const saved = valuesMap[param.id] || {};
+                return `
+                  <tr data-parameter-id="${param.id}">
+                    <td>${LabApp.escapeHtml(param.name)}</td>
+                    <td><input class="val" value="${LabApp.escapeHtml(saved.value || '')}" placeholder="Value"></td>
+                    <td>${LabApp.escapeHtml(param.unit || '-')}</td>
+                    <td>${LabApp.escapeHtml(param.reference_range || '-')}</td>
+                    <td>
+                      <select class="flag">
+                        <option value=""></option>
+                        <option value="H" ${saved.flag === 'H' ? 'selected' : ''}>H</option>
+                        <option value="L" ${saved.flag === 'L' ? 'selected' : ''}>L</option>
+                        <option value="N" ${saved.flag === 'N' ? 'selected' : ''}>N</option>
+                      </select>
+                    </td>
+                    <td><input class="remarks" value="${LabApp.escapeHtml(saved.remarks || '')}" placeholder="Optional"></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `).join('');
+    }
+
+    function collectPayload(form) {
+      const fd = new FormData(form);
+      const payload = {
+        patient_name: fd.get('patient_name'),
+        owner_phone: fd.get('owner_phone'),
+        pet_name: fd.get('pet_name'),
+        species: fd.get('species'),
+        breed: fd.get('breed'),
+        age: fd.get('age'),
+        sex: fd.get('sex'),
+        referring_vet: fd.get('referring_vet'),
+        sample_date: fd.get('sample_date') || null,
+        report_date: fd.get('report_date') || null,
+        clinical_notes: fd.get('clinical_notes'),
+        remarks: fd.get('remarks'),
+        status: fd.get('status'),
+        panel_ids: selectedPanelIds(),
+        results: [],
+      };
+
+      document.querySelectorAll('#resultsArea tr[data-parameter-id]').forEach((tr) => {
+        payload.results.push({
+          parameter_id: Number(tr.dataset.parameterId),
+          value: tr.querySelector('.val').value.trim(),
+          flag: tr.querySelector('.flag').value || null,
+          remarks: tr.querySelector('.remarks').value.trim() || null,
+        });
+      });
+
+      return payload;
+    }
+
+    function fillForm(report) {
+      const form = document.getElementById('reportForm');
+      const fields = [
+        'patient_name','owner_phone','pet_name','species','breed','age','sex',
+        'referring_vet','sample_date','report_date','clinical_notes','remarks','status'
+      ];
+      fields.forEach((name) => {
+        if (form.elements[name] && report[name] != null) form.elements[name].value = report[name];
+      });
+
+      (report.panels || []).forEach((panel) => {
+        (panel.results || []).forEach((r) => {
+          valuesMap[r.parameter_id] = {
+            value: r.value || '',
+            flag: r.flag || '',
+            remarks: r.remarks || '',
+          };
+        });
+      });
+
+      renderPanelChecks((report.panels || []).map((p) => p.id));
+      renderResults();
+    }
+
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alert = document.getElementById('alert');
+      alert.style.display = 'none';
+
+      const payload = collectPayload(e.target);
+      if (!payload.panel_ids.length) {
+        alert.style.display = 'block';
+        alert.textContent = 'Select at least one test panel';
+        return;
+      }
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      try {
+        const data = editId
+          ? await LabApp.api(`/api/reports/${editId}`, { method: 'PUT', body: payload })
+          : await LabApp.api('/api/reports', { method: 'POST', body: payload });
+        window.location.href = `/report/${data.report.id}`;
+      } catch (err) {
+        alert.style.display = 'block';
+        alert.textContent = err.message || 'Save failed';
+        btn.disabled = false;
+      }
+    });
+
+    (async () => {
+      const user = await LabApp.requireAuth();
+      if (!user) return;
+      document.getElementById('logoutBtn').onclick = () => LabApp.logout();
+      document.getElementById('report_date').value = LabApp.today();
+
+      const tpl = await LabApp.api('/api/templates');
+      panels = tpl.panels || [];
+      renderPanelChecks();
+      renderResults();
+
+      editId = pathEditId();
+      if (editId) {
+        document.getElementById('pageTitle').textContent = 'Edit Lab Report';
+        const data = await LabApp.api(`/api/reports/${editId}`);
+        fillForm(data.report);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — PetZone Laboratory</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header no-print">
+    <a href="/dashboard"><img src="/assets/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/assets/petzonelogo.svg'"></a>
+    <nav>
+      <span id="userLabel" style="color:var(--gray-500); font-size:14px;"></span>
+      <a href="/report/new" class="btn btn-pink btn-sm">+ New Report</a>
+      <button class="btn btn-outline btn-sm" id="logoutBtn">Logout</button>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="toolbar">
+      <div>
+        <h2 style="color:var(--blue);">Lab Reports</h2>
+        <p class="hint">Search by report no, patient, pet, or phone</p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input id="search" placeholder="Search reports..." style="min-width:240px;">
+        <button class="btn btn-primary btn-sm" id="searchBtn">Search</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="alert" class="alert alert-error" style="display:none;"></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Report No</th>
+              <th>Patient</th>
+              <th>Pet</th>
+              <th>Species</th>
+              <th>Report Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="7">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    async function loadReports(q = '') {
+      const tbody = document.getElementById('rows');
+      try {
+        const data = await LabApp.api('/api/reports' + (q ? `?q=${encodeURIComponent(q)}` : ''));
+        if (!data.reports.length) {
+          tbody.innerHTML = '<tr><td colspan="7">No reports yet. Create the first one.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.reports.map((r) => `
+          <tr>
+            <td><strong>${LabApp.escapeHtml(r.report_no)}</strong></td>
+            <td>${LabApp.escapeHtml(r.patient_name)}</td>
+            <td>${LabApp.escapeHtml(r.pet_name)}</td>
+            <td>${LabApp.escapeHtml(r.species || '-')}</td>
+            <td>${LabApp.escapeHtml(r.report_date || '-')}</td>
+            <td><span class="badge badge-${r.status}">${LabApp.escapeHtml(r.status)}</span></td>
+            <td style="display:flex; gap:6px; flex-wrap:wrap;">
+              <a class="btn btn-primary btn-sm" href="/report/${r.id}">Print</a>
+              <a class="btn btn-outline btn-sm" href="/report/${r.id}/edit">Edit</a>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7">Failed to load reports</td></tr>';
+        const alert = document.getElementById('alert');
+        alert.style.display = 'block';
+        alert.textContent = err.message;
+      }
+    }
+
+    (async () => {
+      const user = await LabApp.requireAuth();
+      if (!user) return;
+      document.getElementById('userLabel').textContent = user.name;
+      document.getElementById('logoutBtn').onclick = () => LabApp.logout();
+      document.getElementById('searchBtn').onclick = () => loadReports(document.getElementById('search').value.trim());
+      document.getElementById('search').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') loadReports(e.target.value.trim());
+      });
+      loadReports();
+    })();
+  </script>
+</body>
+</html>

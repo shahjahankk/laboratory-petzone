@@ -1,0 +1,29 @@
+{
+  "name": "petzone-laboratory",
+  "version": "1.0.0",
+  "description": "PetZone Laboratory test report system (CBC, LFT, RFT, Electrolytes) — cPanel ready",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "cpanel": "NODE_ENV=production node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": ["petzone", "laboratory", "reports", "cbc", "lft", "rft"],
+  "author": "PetZone Development Team",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.11.0",
+    "mysql2": "^3.22.5"
+  }
+}
