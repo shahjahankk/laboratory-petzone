@@ -12,6 +12,7 @@ const { connectDB, pool } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const templatesRoutes = require('./routes/templates');
 const reportsRoutes = require('./routes/reports');
+const patientsRoutes = require('./routes/patients');
 
 const app = express();
 const PORT = process.env.PORT || 4060;
@@ -70,6 +71,7 @@ app.use('/api/auth/login', rateLimit({
 app.use('/api/auth', authRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/patients', patientsRoutes);
 
 app.use('/css', express.static(path.join(publicDir, 'css')));
 app.use('/js', express.static(path.join(publicDir, 'js')));

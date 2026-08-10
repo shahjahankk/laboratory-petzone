@@ -23,6 +23,21 @@ async function nextReportNumber(conn) {
   return `${prefix}${String(seq).padStart(4, '0')}`;
 }
 
+function normalizeSpecies(species) {
+  const s = String(species || '').trim().toLowerCase();
+  if (s === 'cat' || s === 'feline') return 'Cat';
+  if (s === 'dog' || s === 'canine') return 'Dog';
+  return species || '';
+}
+
+function speciesReference(param, species) {
+  const key = normalizeSpecies(species);
+  if (key === 'Cat') {
+    return param.reference_range_cat || param.reference_range || '';
+  }
+  return param.reference_range_dog || param.reference_range || '';
+}
+
 async function loadReportBundle(reportId) {
   const reports = await executeQuery(
     `SELECT r.*, u.name AS created_by_name
@@ -35,6 +50,8 @@ async function loadReportBundle(reportId) {
   if (!reports.length) return null;
 
   const report = reports[0];
+  report.species = normalizeSpecies(report.species) || report.species;
+
   const panels = await executeQuery(
     `SELECT p.id, p.code, p.name, p.description, p.display_order
      FROM lab_report_panels rp
@@ -46,7 +63,9 @@ async function loadReportBundle(reportId) {
 
   const results = await executeQuery(
     `SELECT rr.id, rr.parameter_id, rr.value, rr.flag, rr.remarks,
-            tp.panel_id, tp.code, tp.name, tp.unit, tp.reference_range, tp.display_order
+            tp.panel_id, tp.code, tp.name, tp.unit,
+            tp.reference_range, tp.reference_range_dog, tp.reference_range_cat,
+            tp.display_order
      FROM lab_report_results rr
      INNER JOIN lab_test_parameters tp ON tp.id = rr.parameter_id
      WHERE rr.report_id = ?
@@ -54,9 +73,16 @@ async function loadReportBundle(reportId) {
     [reportId]
   );
 
+  const mappedResults = results.map((r) => ({
+    ...r,
+    reference_range: speciesReference(r, report.species),
+    reference_range_dog: r.reference_range_dog || r.reference_range || '',
+    reference_range_cat: r.reference_range_cat || r.reference_range || '',
+  }));
+
   const panelsWithResults = panels.map((panel) => ({
     ...panel,
-    results: results.filter((r) => r.panel_id === panel.id),
+    results: mappedResults.filter((r) => r.panel_id === panel.id),
   }));
 
   return { ...report, panels: panelsWithResults };
@@ -137,6 +163,11 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Patient and pet name are required' });
     }
 
+    const speciesNorm = normalizeSpecies(species);
+    if (speciesNorm !== 'Dog' && speciesNorm !== 'Cat') {
+      return res.status(400).json({ success: false, message: 'Select species: Dog or Cat' });
+    }
+
     const selectedPanels = Array.isArray(panel_ids) ? panel_ids.map(Number).filter(Boolean) : [];
     if (!selectedPanels.length) {
       return res.status(400).json({ success: false, message: 'Select at least one test panel' });
@@ -155,7 +186,7 @@ router.post('/', authMiddleware, async (req, res) => {
         patient_name.trim(),
         owner_phone || null,
         pet_name.trim(),
-        species || null,
+        speciesNorm,
         breed || null,
         age || null,
         sex || null,
@@ -232,6 +263,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
       results,
     } = req.body;
 
+    const speciesNorm = normalizeSpecies(species);
+    if (speciesNorm !== 'Dog' && speciesNorm !== 'Cat') {
+      return res.status(400).json({ success: false, message: 'Select species: Dog or Cat' });
+    }
+
     await conn.beginTransaction();
 
     await conn.execute(
@@ -244,7 +280,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
         patient_name,
         owner_phone || null,
         pet_name,
-        species || null,
+        speciesNorm,
         breed || null,
         age || null,
         sex || null,

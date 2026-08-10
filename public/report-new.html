@@ -11,105 +11,134 @@
     <a href="/dashboard"><img src="/img/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/img/petzonelogo.svg'"></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">Back to List</a>
-      <button class="btn btn-outline btn-sm" id="logoutBtn">Logout</button>
+      <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
     </nav>
   </header>
 
   <div class="container">
-    <h2 style="color:var(--blue); margin-bottom:16px;" id="pageTitle">New Lab Report</h2>
+    <h2 style="color:var(--blue); margin-bottom:8px;" id="pageTitle">New Lab Report</h2>
+    <p class="hint" style="margin-bottom:16px;">Step-by-step: Patient → Tests → Results</p>
+
+    <div class="wizard-steps" id="wizardSteps">
+      <div class="wizard-step active" data-step="1"><span>1</span> Patient</div>
+      <div class="wizard-step" data-step="2"><span>2</span> Tests</div>
+      <div class="wizard-step" data-step="3"><span>3</span> Results</div>
+    </div>
+
     <div id="alert" class="alert alert-error" style="display:none;"></div>
 
     <form id="reportForm">
-      <div class="card" style="margin-bottom:16px;">
-        <h3 class="section-title">Patient Details</h3>
-        <div class="grid-3">
-          <div class="form-group">
-            <label>Owner / Patient Name *</label>
-            <input name="patient_name" required>
+      <!-- STEP 1 -->
+      <div class="wizard-panel active" data-panel="1">
+        <div class="card" style="margin-bottom:16px;">
+          <h3 class="section-title">Find existing patient (optional)</h3>
+          <div class="toolbar" style="margin-bottom:12px;">
+            <input id="patientSearch" placeholder="Search by owner, pet, or phone..." style="flex:1; min-width:220px;">
+            <button type="button" class="btn btn-outline btn-sm" id="patientSearchBtn">Search</button>
+            <button type="button" class="btn btn-outline btn-sm" id="clearPatientBtn">New Patient</button>
           </div>
-          <div class="form-group">
-            <label>Phone</label>
-            <input name="owner_phone">
-          </div>
-          <div class="form-group">
-            <label>Referring Vet</label>
-            <input name="referring_vet">
-          </div>
-          <div class="form-group">
-            <label>Pet Name *</label>
-            <input name="pet_name" required>
-          </div>
-          <div class="form-group">
-            <label>Species</label>
-            <select name="species">
-              <option value="">Select</option>
-              <option>Canine</option>
-              <option>Feline</option>
-              <option>Avian</option>
-              <option>Rabbit</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Breed</label>
-            <input name="breed">
-          </div>
-          <div class="form-group">
-            <label>Age</label>
-            <input name="age" placeholder="e.g. 3 years">
-          </div>
-          <div class="form-group">
-            <label>Sex</label>
-            <select name="sex">
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Male Neutered</option>
-              <option>Female Spayed</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Sample Date</label>
-            <input type="date" name="sample_date">
-          </div>
-          <div class="form-group">
-            <label>Report Date</label>
-            <input type="date" name="report_date" id="report_date">
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select name="status">
-              <option value="final">Final</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
+          <div id="patientResults" class="patient-list"></div>
         </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Clinical Notes</label>
-            <textarea name="clinical_notes" rows="2"></textarea>
+
+        <div class="card" style="margin-bottom:16px;">
+          <h3 class="section-title">Patient Details</h3>
+          <div class="grid-3">
+            <div class="form-group">
+              <label>Owner / Patient Name *</label>
+              <input name="patient_name" required>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input name="owner_phone">
+            </div>
+            <div class="form-group">
+              <label>Referring Vet</label>
+              <input name="referring_vet">
+            </div>
+            <div class="form-group">
+              <label>Pet Name *</label>
+              <input name="pet_name" required>
+            </div>
+            <div class="form-group">
+              <label>Species *</label>
+              <select name="species" id="species" required>
+                <option value="">Select Dog or Cat</option>
+                <option value="Dog">Dog</option>
+                <option value="Cat">Cat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Breed</label>
+              <input name="breed">
+            </div>
+            <div class="form-group">
+              <label>Age</label>
+              <input name="age" placeholder="e.g. 3 years">
+            </div>
+            <div class="form-group">
+              <label>Sex</label>
+              <select name="sex">
+                <option value="">Select</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Male Neutered</option>
+                <option>Female Spayed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Sample Date</label>
+              <input type="date" name="sample_date" id="sample_date">
+            </div>
+            <div class="form-group">
+              <label>Report Date</label>
+              <input type="date" name="report_date" id="report_date">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="status">
+                <option value="final">Final</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
-            <label>Lab Remarks</label>
+            <label>Remarks</label>
             <textarea name="remarks" rows="2"></textarea>
           </div>
         </div>
+
+        <div class="wizard-nav">
+          <span></span>
+          <button type="button" class="btn btn-primary" id="toStep2">Next: Select Tests →</button>
+        </div>
       </div>
 
-      <div class="card" style="margin-bottom:16px;">
-        <h3 class="section-title">Select Tests</h3>
-        <div class="grid-3" id="panelChecks"></div>
+      <!-- STEP 2 -->
+      <div class="wizard-panel" data-panel="2">
+        <div class="card" style="margin-bottom:16px;">
+          <h3 class="section-title">Select Tests</h3>
+          <p class="hint" style="margin-bottom:12px;">Choose one or more panels for this report.</p>
+          <div class="grid-3" id="panelChecks"></div>
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-outline" id="backStep1">← Back</button>
+          <button type="button" class="btn btn-primary" id="toStep3">Next: Enter Results →</button>
+        </div>
       </div>
 
-      <div class="card" style="margin-bottom:16px;">
-        <h3 class="section-title">Enter Results</h3>
-        <p class="hint" style="margin-bottom:12px;">Same table pattern for every panel — Parameter / Result / Unit / Reference / Flag</p>
-        <div id="resultsArea"></div>
-      </div>
-
-      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px;">
-        <button type="submit" class="btn btn-primary" id="saveBtn">Save Report</button>
-        <a href="/dashboard" class="btn btn-outline">Cancel</a>
+      <!-- STEP 3 -->
+      <div class="wizard-panel" data-panel="3">
+        <div class="card" style="margin-bottom:16px;">
+          <h3 class="section-title">Enter Results</h3>
+          <p class="hint" style="margin-bottom:12px;" id="resultsHint">
+            Enter values only. References follow selected species.
+          </p>
+          <div id="resultsArea"></div>
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-outline" id="backStep2">← Back</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save &amp; Open Print</button>
+        </div>
       </div>
     </form>
   </div>
@@ -118,17 +147,104 @@
   <script>
     let panels = [];
     let editId = null;
+    let step = 1;
     const valuesMap = {};
 
     function pathEditId() {
       const parts = location.pathname.split('/').filter(Boolean);
-      // /report/:id/edit
       if (parts[0] === 'report' && parts[2] === 'edit') return parts[1];
       return null;
     }
 
+    function showAlert(msg) {
+      const el = document.getElementById('alert');
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg || '';
+    }
+
+    function goStep(n) {
+      step = n;
+      document.querySelectorAll('.wizard-panel').forEach((p) => {
+        p.classList.toggle('active', Number(p.dataset.panel) === n);
+      });
+      document.querySelectorAll('.wizard-step').forEach((s) => {
+        const sn = Number(s.dataset.step);
+        s.classList.toggle('active', sn === n);
+        s.classList.toggle('done', sn < n);
+      });
+      if (n === 3) renderResults();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function currentSpecies() {
+      return document.getElementById('species').value;
+    }
+
+    function refForParam(param) {
+      const sp = currentSpecies();
+      if (sp === 'Cat') return param.reference_range_cat || param.reference_range || '-';
+      if (sp === 'Dog') return param.reference_range_dog || param.reference_range || '-';
+      return '—';
+    }
+
     function selectedPanelIds() {
       return [...document.querySelectorAll('input[name="panel_id"]:checked')].map((el) => Number(el.value));
+    }
+
+    function fillPatientFields(p) {
+      const form = document.getElementById('reportForm');
+      const map = {
+        patient_name: p.patient_name,
+        owner_phone: p.owner_phone,
+        pet_name: p.pet_name,
+        species: p.species,
+        breed: p.breed,
+        age: p.age,
+        sex: p.sex,
+        referring_vet: p.referring_vet,
+      };
+      Object.keys(map).forEach((k) => {
+        if (!form.elements[k]) return;
+        let val = map[k] == null ? '' : map[k];
+        if (k === 'species') {
+          const s = String(val).toLowerCase();
+          if (s === 'feline' || s === 'cat') val = 'Cat';
+          else if (s === 'canine' || s === 'dog') val = 'Dog';
+        }
+        form.elements[k].value = val;
+      });
+    }
+
+    async function searchPatients(q = '') {
+      const box = document.getElementById('patientResults');
+      box.innerHTML = '<p class="hint">Searching...</p>';
+      try {
+        const data = await LabApp.api('/api/patients' + (q ? `?q=${encodeURIComponent(q)}` : '?limit=20'));
+        if (!data.patients.length) {
+          box.innerHTML = '<p class="hint">No saved patients found. Fill details below.</p>';
+          return;
+        }
+        box.innerHTML = data.patients.map((p, i) => `
+          <button type="button" class="patient-item" data-idx="${i}">
+            <strong>${LabApp.escapeHtml(p.pet_name)}</strong>
+            <span>${LabApp.escapeHtml(p.species || '')}</span>
+            <div class="muted">${LabApp.escapeHtml(p.patient_name)}${p.owner_phone ? ' · ' + LabApp.escapeHtml(p.owner_phone) : ''}</div>
+            <div class="muted">Visits: ${p.visit_count} · Last: ${LabApp.escapeHtml(String(p.last_report_date || '').slice(0, 10))}</div>
+          </button>
+        `).join('');
+
+        box.querySelectorAll('.patient-item').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const patient = data.patients[Number(btn.dataset.idx)];
+            fillPatientFields(patient);
+            box.querySelectorAll('.patient-item').forEach((b) => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            showAlert('');
+          });
+        });
+      } catch (err) {
+        box.innerHTML = `<p class="hint">${LabApp.escapeHtml(err.message)}</p>`;
+      }
     }
 
     function renderPanelChecks(selected = []) {
@@ -149,18 +265,29 @@
       box.querySelectorAll('input[name="panel_id"]').forEach((input) => {
         input.addEventListener('change', () => {
           input.closest('.panel-check').classList.toggle('active', input.checked);
-          renderResults();
         });
       });
     }
 
+    function cacheResultValues() {
+      document.querySelectorAll('#resultsArea tr[data-parameter-id]').forEach((tr) => {
+        const id = Number(tr.dataset.parameterId);
+        const input = tr.querySelector('.val');
+        if (input) valuesMap[id] = { value: input.value };
+      });
+    }
+
     function renderResults() {
+      cacheResultValues();
       const ids = selectedPanelIds();
       const area = document.getElementById('resultsArea');
       const selected = panels.filter((p) => ids.includes(p.id));
+      const sp = currentSpecies();
+      document.getElementById('resultsHint').textContent =
+        `Species: ${sp || '—'} — enter result values only. Reference ranges update automatically.`;
 
       if (!selected.length) {
-        area.innerHTML = '<p class="hint">Select one or more tests above to enter results.</p>';
+        area.innerHTML = '<p class="hint">No tests selected. Go back and choose tests.</p>';
         return;
       }
 
@@ -170,12 +297,10 @@
           <table>
             <thead>
               <tr>
-                <th style="width:28%">Parameter</th>
-                <th style="width:18%">Result</th>
-                <th style="width:12%">Unit</th>
-                <th style="width:18%">Reference</th>
-                <th style="width:12%">Flag</th>
-                <th>Remarks</th>
+                <th style="width:40%">Parameter</th>
+                <th style="width:20%">Result</th>
+                <th style="width:15%">Unit</th>
+                <th style="width:25%">Reference (${LabApp.escapeHtml(sp || '—')})</th>
               </tr>
             </thead>
             <tbody>
@@ -184,18 +309,9 @@
                 return `
                   <tr data-parameter-id="${param.id}">
                     <td>${LabApp.escapeHtml(param.name)}</td>
-                    <td><input class="val" value="${LabApp.escapeHtml(saved.value || '')}" placeholder="Value"></td>
+                    <td><input class="val" value="${LabApp.escapeHtml(saved.value || '')}" placeholder="Value" inputmode="decimal"></td>
                     <td>${LabApp.escapeHtml(param.unit || '-')}</td>
-                    <td>${LabApp.escapeHtml(param.reference_range || '-')}</td>
-                    <td>
-                      <select class="flag">
-                        <option value=""></option>
-                        <option value="H" ${saved.flag === 'H' ? 'selected' : ''}>H</option>
-                        <option value="L" ${saved.flag === 'L' ? 'selected' : ''}>L</option>
-                        <option value="N" ${saved.flag === 'N' ? 'selected' : ''}>N</option>
-                      </select>
-                    </td>
-                    <td><input class="remarks" value="${LabApp.escapeHtml(saved.remarks || '')}" placeholder="Optional"></td>
+                    <td>${LabApp.escapeHtml(refForParam(param))}</td>
                   </tr>
                 `;
               }).join('')}
@@ -205,7 +321,31 @@
       `).join('');
     }
 
+    function validateStep1() {
+      const form = document.getElementById('reportForm');
+      if (!form.patient_name.value.trim() || !form.pet_name.value.trim()) {
+        showAlert('Owner name and pet name are required');
+        return false;
+      }
+      if (!form.species.value) {
+        showAlert('Select Dog or Cat');
+        return false;
+      }
+      showAlert('');
+      return true;
+    }
+
+    function validateStep2() {
+      if (!selectedPanelIds().length) {
+        showAlert('Select at least one test');
+        return false;
+      }
+      showAlert('');
+      return true;
+    }
+
     function collectPayload(form) {
+      cacheResultValues();
       const fd = new FormData(form);
       const payload = {
         patient_name: fd.get('patient_name'),
@@ -218,7 +358,7 @@
         referring_vet: fd.get('referring_vet'),
         sample_date: fd.get('sample_date') || null,
         report_date: fd.get('report_date') || null,
-        clinical_notes: fd.get('clinical_notes'),
+        clinical_notes: '',
         remarks: fd.get('remarks'),
         status: fd.get('status'),
         panel_ids: selectedPanelIds(),
@@ -229,8 +369,8 @@
         payload.results.push({
           parameter_id: Number(tr.dataset.parameterId),
           value: tr.querySelector('.val').value.trim(),
-          flag: tr.querySelector('.flag').value || null,
-          remarks: tr.querySelector('.remarks').value.trim() || null,
+          flag: null,
+          remarks: null,
         });
       });
 
@@ -238,51 +378,63 @@
     }
 
     function fillForm(report) {
+      fillPatientFields(report);
       const form = document.getElementById('reportForm');
-      const fields = [
-        'patient_name','owner_phone','pet_name','species','breed','age','sex',
-        'referring_vet','sample_date','report_date','clinical_notes','remarks','status'
-      ];
-      fields.forEach((name) => {
-        if (form.elements[name] && report[name] != null) form.elements[name].value = report[name];
+      ['sample_date', 'report_date', 'remarks', 'status'].forEach((name) => {
+        if (form.elements[name] && report[name] != null) {
+          let v = report[name];
+          if ((name === 'sample_date' || name === 'report_date') && v) v = String(v).slice(0, 10);
+          form.elements[name].value = v;
+        }
       });
 
       (report.panels || []).forEach((panel) => {
         (panel.results || []).forEach((r) => {
-          valuesMap[r.parameter_id] = {
-            value: r.value || '',
-            flag: r.flag || '',
-            remarks: r.remarks || '',
-          };
+          valuesMap[r.parameter_id] = { value: r.value || '' };
         });
       });
 
       renderPanelChecks((report.panels || []).map((p) => p.id));
-      renderResults();
     }
+
+    document.getElementById('toStep2').onclick = () => { if (validateStep1()) goStep(2); };
+    document.getElementById('toStep3').onclick = () => { if (validateStep2()) goStep(3); };
+    document.getElementById('backStep1').onclick = () => goStep(1);
+    document.getElementById('backStep2').onclick = () => goStep(2);
+    document.getElementById('species').addEventListener('change', () => { if (step === 3) renderResults(); });
+    document.getElementById('patientSearchBtn').onclick = () => searchPatients(document.getElementById('patientSearch').value.trim());
+    document.getElementById('patientSearch').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchPatients(e.target.value.trim());
+      }
+    });
+    document.getElementById('clearPatientBtn').onclick = () => {
+      const form = document.getElementById('reportForm');
+      ['patient_name','owner_phone','pet_name','species','breed','age','sex','referring_vet','remarks'].forEach((n) => {
+        if (form.elements[n]) form.elements[n].value = '';
+      });
+      document.getElementById('patientResults').innerHTML = '';
+      searchPatients('');
+    };
 
     document.getElementById('reportForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const alert = document.getElementById('alert');
-      alert.style.display = 'none';
-
-      const payload = collectPayload(e.target);
-      if (!payload.panel_ids.length) {
-        alert.style.display = 'block';
-        alert.textContent = 'Select at least one test panel';
+      if (!validateStep1() || !validateStep2()) {
+        goStep(!document.getElementById('reportForm').species.value ? 1 : 2);
         return;
       }
 
       const btn = document.getElementById('saveBtn');
       btn.disabled = true;
       try {
+        const payload = collectPayload(e.target);
         const data = editId
           ? await LabApp.api(`/api/reports/${editId}`, { method: 'PUT', body: payload })
           : await LabApp.api('/api/reports', { method: 'POST', body: payload });
-        window.location.href = `/report/${data.report.id}`;
+        window.location.href = `/report/${data.report.id}?print=1`;
       } catch (err) {
-        alert.style.display = 'block';
-        alert.textContent = err.message || 'Save failed';
+        showAlert(err.message || 'Save failed');
         btn.disabled = false;
       }
     });
@@ -292,17 +444,26 @@
       if (!user) return;
       document.getElementById('logoutBtn').onclick = () => LabApp.logout();
       document.getElementById('report_date').value = LabApp.today();
+      document.getElementById('sample_date').value = LabApp.today();
 
       const tpl = await LabApp.api('/api/templates');
       panels = tpl.panels || [];
       renderPanelChecks();
-      renderResults();
+
+      const prefill = new URLSearchParams(location.search).get('patient');
+      if (prefill) {
+        document.getElementById('patientSearch').value = prefill;
+        await searchPatients(prefill);
+      } else {
+        await searchPatients('');
+      }
 
       editId = pathEditId();
       if (editId) {
         document.getElementById('pageTitle').textContent = 'Edit Lab Report';
         const data = await LabApp.api(`/api/reports/${editId}`);
         fillForm(data.report);
+        goStep(1);
       }
     })();
   </script>
