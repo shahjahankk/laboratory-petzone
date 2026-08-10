@@ -115,6 +115,45 @@ const LabApp = {
     return this.formatReportDateParts(reportDate, createdAt).full;
   },
 
+  /** Parse "min - max" style reference ranges. */
+  parseReferenceRange(rangeStr) {
+    const s = String(rangeStr || '')
+      .replace(/[–—]/g, '-')
+      .replace(/\s+to\s+/gi, '-')
+      .trim();
+    if (!s) return null;
+    const m = s.match(/(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) return null;
+    const min = Number(m[1]);
+    const max = Number(m[2]);
+    if (Number.isNaN(min) || Number.isNaN(max)) return null;
+    return { min: Math.min(min, max), max: Math.max(min, max) };
+  },
+
+  parseResultNumber(value) {
+    const s = String(value == null ? '' : value).trim();
+    if (!s || s === '-' || s === '—' || s === 'N/A') return null;
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    if (!m) return null;
+    const n = Number(m[0]);
+    return Number.isNaN(n) ? null : n;
+  },
+
+  isOutOfRange(value, rangeStr) {
+    const n = this.parseResultNumber(value);
+    const r = this.parseReferenceRange(rangeStr);
+    if (n == null || !r) return false;
+    return n < r.min || n > r.max;
+  },
+
+  /** Result cell HTML — red when below min or above max of reference. */
+  resultValueCellHtml(value, rangeStr) {
+    const raw = value == null ? '' : String(value).trim();
+    const display = raw || ' - ';
+    const out = raw ? this.isOutOfRange(raw, rangeStr) : false;
+    return `<td class="result-val${out ? ' result-out' : ''}">${this.escapeHtml(display)}</td>`;
+  },
+
   metaCellHtml(label, value) {
     return `<div class="meta-cell"><span class="k">${this.escapeHtml(label)}</span><span class="v">${this.escapeHtml(value || ' - ')}</span></div>`;
   },
@@ -129,7 +168,7 @@ const LabApp = {
           <img src="/api/static/img/petzonelogo.png" alt="PetZone">
         </div>
         <div class="rh-center">
-          <h1>Pet Zone Laboratory</h1>
+          <h1>PetZone Laboratory</h1>
           <div class="sub">Diagnostic Laboratory Report</div>
         </div>
         <div class="rh-right">

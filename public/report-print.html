@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Print Report  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=27">
+  <title>Print Report  -  PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=28">
 </head>
 <body class="print-page">
   <header class="header no-print">
-    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">Pet Zone Laboratory</span></span></a>
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">All Reports</a>
       <a href="#" class="btn btn-outline btn-sm" id="editBtn">Edit</a>
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=27"></script>
+  <script src="/api/static/app.js?v=28"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -35,7 +35,7 @@
     }
 
     function renderReport(report) {
-      document.title = `${report.report_no} - Pet Zone Laboratory`;
+      document.title = `${report.report_no} - PetZone Laboratory`;
       document.getElementById('editBtn').href = `/report/${report.id}/edit`;
       document.getElementById('newForPetBtn').href =
         `/report/new?fresh=1&patient=${encodeURIComponent(report.owner_phone || report.pet_name || report.patient_name || '')}`;
@@ -80,7 +80,7 @@
               ${rows.map((r) => `
                 <tr>
                   <td>${LabApp.escapeHtml(r.name)}</td>
-                  <td class="result-val">${LabApp.escapeHtml(r.value || ' - ')}</td>
+                  ${LabApp.resultValueCellHtml(r.value, r.reference_range)}
                   <td>${LabApp.escapeHtml(r.unit || ' - ')}</td>
                   <td>${LabApp.escapeHtml(r.reference_range || ' - ')}</td>
                 </tr>

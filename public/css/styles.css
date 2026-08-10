@@ -572,6 +572,10 @@ table.data tr:hover td { background: #FFF8FA; }
 .remarks-box-lg { min-height: 96px; background: #f0f9ff; }
 .remarks-body { margin-top: 4px; white-space: pre-wrap; line-height: 1.55; color: var(--report-ink); }
 .result-val { white-space: pre-wrap; }
+.result-val.result-out {
+  color: #dc2626;
+  font-weight: 800;
+}
 
 /* Ultrasound: blank remarks for pen / handwriting (medium height) */
 .remarks-handwrite {
@@ -884,6 +888,12 @@ table.data tr:hover td { background: #FFF8FA; }
   .report-panel table { font-size: 10.5px !important; }
   .report-panel th, .report-panel td { padding: 4px 6px !important; }
   .report-panel th { font-size: 9px !important; }
+  .result-val.result-out {
+    color: #dc2626 !important;
+    font-weight: 800 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
   /* Handwriting remarks — keep short */
   .remarks-handwrite {
