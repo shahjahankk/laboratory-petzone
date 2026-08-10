@@ -113,10 +113,11 @@
         <div class="report-topbar"></div>
         <div class="report-header">
           <div class="brand">
-            <img src="/api/static/img/petzonelogo.png" alt="PetZone" >
+            <img src="/api/static/img/petzonelogo.png" alt="PetZone">
             <div>
               <h1>PetZone Laboratory</h1>
               <div class="sub">Diagnostic Laboratory Report</div>
+              <div class="lab-tagline">PetZone Hospital · Veterinary Diagnostics</div>
             </div>
           </div>
           <div class="report-no-box">
@@ -126,6 +127,7 @@
           </div>
         </div>
         <div class="species-banner ${speciesClass}">${LabApp.escapeHtml(species)}</div>
+        <div class="report-section-title">Patient Information</div>
         <div class="meta-card">
           ${metaCell('Owner', draft.patient_name)}
           ${metaCell('Phone', draft.owner_phone)}
@@ -138,14 +140,21 @@
           ${metaCell('Sample Date', formatDate(draft.sample_date))}
           ${metaCell('Report Date', formatDate(draft.report_date))}
         </div>
+        <div class="report-section-title">Investigations &amp; Results</div>
         ${panelsHtml}
         ${draft.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING) : ''}
         ${imagesHtml}
-        ${draft.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks:</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>` : ''}
-        ${draft.remarks ? `<div class="remarks-box"><strong>Remarks:</strong> ${LabApp.escapeHtml(draft.remarks)}</div>` : ''}
+        ${draft.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>` : ''}
+        ${draft.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>` : ''}
         <div class="report-footer">
-          <div>For veterinary diagnostic use only. References shown for <strong>${LabApp.escapeHtml(species)}</strong>.</div>
-          <div class="sign-box"><div class="sign-line"></div>Authorized Signatory</div>
+          <div class="footer-note">
+            For veterinary diagnostic use only. Correlate with clinical findings.<br>
+            Reference ranges shown are for <strong>${LabApp.escapeHtml(species)}</strong>.
+          </div>
+          <div class="sign-box">
+            <div class="sign-line"></div>
+            <div class="sign-caption">Authorized Signatory</div>
+          </div>
         </div>
       `;
     }
