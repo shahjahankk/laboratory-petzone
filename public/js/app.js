@@ -115,6 +115,82 @@ const LabApp = {
     return this.formatReportDateParts(reportDate, createdAt).full;
   },
 
+  metaCellHtml(label, value) {
+    return `<div class="meta-cell"><span class="k">${this.escapeHtml(label)}</span><span class="v">${this.escapeHtml(value || ' - ')}</span></div>`;
+  },
+
+  renderReportHeaderHtml(opts) {
+    const o = opts || {};
+    const dt = o.dt || this.formatReportDateParts(o.report_date, o.created_at);
+    return `
+      <div class="report-topbar"></div>
+      <div class="report-header">
+        <div class="rh-left">
+          <img src="/api/static/img/petzonelogo.png" alt="PetZone">
+        </div>
+        <div class="rh-center">
+          <h1>Pet Zone Laboratory</h1>
+          <div class="sub">Diagnostic Laboratory Report</div>
+        </div>
+        <div class="rh-right">
+          <div class="dt-label">Date &amp; Time</div>
+          <div class="dt-date">${this.escapeHtml(dt.date)}</div>
+          <div class="dt-time">${this.escapeHtml(dt.time)}</div>
+          ${o.report_no ? `<div class="report-meta-line">${this.escapeHtml(o.report_no)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  },
+
+  renderPatientCardHtml(p) {
+    const d = p || {};
+    const fmt = (v) => (v ? String(v).slice(0, 10) : ' - ');
+    return `
+      <div class="report-section-title">Patient Information</div>
+      <div class="meta-card">
+        ${this.metaCellHtml('Owner', d.patient_name)}
+        ${this.metaCellHtml('Phone', d.owner_phone)}
+        ${this.metaCellHtml('Pet Name', d.pet_name)}
+        ${this.metaCellHtml('Species', d.species)}
+        ${this.metaCellHtml('Breed', d.breed)}
+        ${this.metaCellHtml('Age', d.age)}
+        ${this.metaCellHtml('Sex', d.sex)}
+        ${this.metaCellHtml('Referring Vet', d.referring_vet)}
+        ${this.metaCellHtml('Sample Date', fmt(d.sample_date))}
+        ${this.metaCellHtml('Report Date', fmt(d.report_date))}
+      </div>
+    `;
+  },
+
+  renderReportFooterHtml(opts) {
+    const o = opts || {};
+    return `
+      <div class="report-footer">
+        <div class="footer-note">
+          For veterinary diagnostic use only. Correlate with clinical findings.<br>
+          Reference ranges shown are for <strong>${this.escapeHtml(o.species || 'selected species')}</strong>.
+          ${o.prepared_by ? `<br>Prepared by: ${this.escapeHtml(o.prepared_by)}` : ''}<br>
+          <span class="footer-legal">For veterinary treatment purposes. Not intended as a legal or court document.</span>
+        </div>
+        <div class="sign-box">
+          <div class="sign-line"></div>
+          <div class="sign-caption">Authorized Signatory</div>
+        </div>
+      </div>
+    `;
+  },
+
+  /** One printed page: header + patient + body (+ optional footer). */
+  wrapReportPrintPage(chrome, bodyHtml, footerHtml, isFirst) {
+    return `
+      <div class="report-print-page${isFirst ? ' is-first' : ''}">
+        ${chrome}
+        ${bodyHtml || ''}
+        ${footerHtml || ''}
+      </div>
+    `;
+  },
+
   escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')

@@ -747,6 +747,13 @@ table.data tr:hover td { background: #FFF8FA; }
   margin-bottom: 0;
 }
 
+.report-print-page {
+  margin-bottom: 28px;
+}
+.report-print-page.is-first {
+  margin-top: 0;
+}
+
 @page { size: A4; margin: 8mm; }
 
 @media print {
@@ -775,6 +782,22 @@ table.data tr:hover td { background: #FFF8FA; }
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* One test = one full page with its own header + patient */
+  .report-print-page {
+    margin: 0 !important;
+    padding: 0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+  .report-print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .report-print-page .report-panel ~ .report-panel {
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 
   /* Compact header — logo | title | date */
@@ -830,11 +853,11 @@ table.data tr:hover td { background: #FFF8FA; }
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
-  /* Each extra test starts on a new printed page */
+  /* Page wrappers own the breaks now — do not force extra breaks inside a page */
   .report-panel ~ .report-panel,
   .skin-form {
-    break-before: page !important;
-    page-break-before: always !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
   .report-panel-us .remarks-handwrite {
     page-break-inside: avoid !important;

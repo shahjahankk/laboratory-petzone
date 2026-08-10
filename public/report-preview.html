@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4  -  Preview  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=25">
+  <link rel="stylesheet" href="/api/static/styles.css?v=26">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=25"></script>
+  <script src="/api/static/app.js?v=26"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -64,16 +64,22 @@
       const allParamIds = selected.flatMap((p) => (p.parameters || []).map((x) => Number(x.id)));
       const included = new Set(LabApp.resolveIncludedParameterIds(allParamIds, draft));
       const hasUs = selected.some((p) => String(p.code).toUpperCase() === 'ULTRASOUND');
+      const dt = LabApp.formatReportDateParts(draft.report_date);
 
-      const panelsHtml = selected.map((panel) => {
+      const chrome = LabApp.renderReportHeaderHtml({ dt }) + LabApp.renderPatientCardHtml(draft);
+      const footer = LabApp.renderReportFooterHtml({ species });
+
+      const bodies = [];
+      selected.forEach((panel) => {
         const code = String(panel.code).toUpperCase();
-        if (code === 'SKIN_SCRAPING') return '';
+        if (code === 'SKIN_SCRAPING') return;
         if (code === 'ULTRASOUND') {
-          return LabApp.renderUltrasoundSectionHtml(draft.forms?.ULTRASOUND, draft.images || []);
+          bodies.push(LabApp.renderUltrasoundSectionHtml(draft.forms?.ULTRASOUND, draft.images || []));
+          return;
         }
         const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
-        if (!params.length) return '';
-        return `
+        if (!params.length) return;
+        bodies.push(`
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.name || panel.code)}</h2>
           <table>
@@ -96,65 +102,32 @@
               `).join('')}
             </tbody>
           </table>
-        </section>`;
-      }).join('') || '';
-
-      const usOnly = hasUs && selected.every((p) => {
-        const c = String(p.code).toUpperCase();
-        return c === 'ULTRASOUND' || c === 'SKIN_SCRAPING';
+        </section>`);
       });
-      const sectionTitleHtml = usOnly
-        ? ''
-        : '<div class="report-section-title">Investigations &amp; Results</div>';
 
-      const dt = LabApp.formatReportDateParts(draft.report_date);
+      if (draft.forms?.SKIN_SCRAPING) {
+        bodies.push(LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING));
+      }
 
-      document.getElementById('sheet').innerHTML = `
-        <div class="report-topbar"></div>
-        <div class="report-header">
-          <div class="rh-left">
-            <img src="/api/static/img/petzonelogo.png" alt="PetZone">
-          </div>
-          <div class="rh-center">
-            <h1>Pet Zone Laboratory</h1>
-            <div class="sub">Diagnostic Laboratory Report</div>
-          </div>
-          <div class="rh-right">
-            <div class="dt-label">Date &amp; Time</div>
-            <div class="dt-date">${LabApp.escapeHtml(dt.date)}</div>
-            <div class="dt-time">${LabApp.escapeHtml(dt.time)}</div>
-          </div>
-        </div>
-        <div class="report-section-title">Patient Information</div>
-        <div class="meta-card">
-          ${metaCell('Owner', draft.patient_name)}
-          ${metaCell('Phone', draft.owner_phone)}
-          ${metaCell('Pet Name', draft.pet_name)}
-          ${metaCell('Species', species)}
-          ${metaCell('Breed', draft.breed)}
-          ${metaCell('Age', draft.age)}
-          ${metaCell('Sex', draft.sex)}
-          ${metaCell('Referring Vet', draft.referring_vet)}
-          ${metaCell('Sample Date', formatDate(draft.sample_date))}
-          ${metaCell('Report Date', formatDate(draft.report_date))}
-        </div>
-        ${sectionTitleHtml}
-        ${panelsHtml}
-        ${draft.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING) : ''}
-        ${!hasUs && draft.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>` : ''}
-        ${draft.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>` : ''}
-        <div class="report-footer">
-          <div class="footer-note">
-            For veterinary diagnostic use only. Correlate with clinical findings.<br>
-            Reference ranges shown are for <strong>${LabApp.escapeHtml(species)}</strong>.<br>
-            <span class="footer-legal">For veterinary treatment purposes. Not intended as a legal or court document.</span>
-          </div>
-          <div class="sign-box">
-            <div class="sign-line"></div>
-            <div class="sign-caption">Authorized Signatory</div>
-          </div>
-        </div>
-      `;
+      if (!bodies.length) {
+        bodies.push('<p class="hint">No tests selected for this report.</p>');
+      }
+
+      const pagesHtml = bodies.map((body, i) => {
+        const isLast = i === bodies.length - 1;
+        let extra = '';
+        if (isLast) {
+          if (!hasUs && draft.clinical_notes) {
+            extra += `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>`;
+          }
+          if (draft.remarks) {
+            extra += `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>`;
+          }
+        }
+        return LabApp.wrapReportPrintPage(chrome, body + extra, isLast ? footer : '', i === 0);
+      }).join('');
+
+      document.getElementById('sheet').innerHTML = pagesHtml;
     }
 
     function buildPayload(draft) {
