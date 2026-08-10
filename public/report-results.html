@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 3 Â· Results â€” PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=21">
+  <title>Step 3  -  Results  -  Pet Zone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=22">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -98,7 +98,7 @@
 </head>
 <body>
   <header class="header">
-    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">Pet Zone Laboratory</span></span></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
@@ -107,7 +107,7 @@
 
   <div class="container" style="max-width:960px;">
     <h2 style="color:var(--blue);">Enter Results</h2>
-    <p class="hint" style="margin-bottom:16px;">Step 3 of 4 â€” Uncheck fields you do not want on the printed report</p>
+    <p class="hint" style="margin-bottom:16px;">Step 3 of 4  -  Uncheck fields you do not want on the printed report</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
     <div id="okAlert" class="alert alert-ok" style="display:none;"></div>
@@ -126,7 +126,7 @@
         </button>
         <div id="addTestsPanel" class="add-tests-panel">
           <h4>Add another report panel</h4>
-          <p class="hint" style="margin-bottom:10px;">Select a panel to append â€” current values stay saved.</p>
+          <p class="hint" style="margin-bottom:10px;">Select a panel to append  -  current values stay saved.</p>
           <div class="grid-3" id="extraPanelChecks"></div>
           <div style="margin-top:10px;">
             <button type="button" class="btn btn-outline btn-sm" id="closeAddTestsBtn">Close</button>
@@ -141,7 +141,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=21"></script>
+  <script src="/api/static/app.js?v=22"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -161,8 +161,8 @@
     }
 
     function refFor(param, sp) {
-      if (sp === 'Cat') return param.reference_range_cat || param.reference_range || 'â€”';
-      return param.reference_range_dog || param.reference_range || 'â€”';
+      if (sp === 'Cat') return param.reference_range_cat || param.reference_range || ' - ';
+      return param.reference_range_dog || param.reference_range || ' - ';
     }
 
     function syncRowState(tr) {

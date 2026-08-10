@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 1 Â· Patient â€” PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=21">
+  <title>Step 1  -  Patient  -  Pet Zone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=22">
 </head>
 <body>
   <header class="header">
-    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">Pet Zone Laboratory</span></span></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
@@ -17,7 +17,7 @@
 
   <div class="container" style="max-width:920px;">
     <h2 style="color:var(--blue);">New Lab Report</h2>
-    <p class="hint" style="margin-bottom:16px;">Step 1 of 4 â€” Patient details</p>
+    <p class="hint" style="margin-bottom:16px;">Step 1 of 4  -  Patient details</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
     <div id="okAlert" class="alert alert-ok" style="display:none;"></div>
@@ -25,7 +25,7 @@
     <div class="card" style="margin-bottom:16px;">
       <h3 class="section-title">Search by phone number</h3>
       <p class="hint" style="margin-bottom:12px;">
-        Enter phone (e.g. <strong>9231231231</strong>). One number can have many pets â€” pick a pet or register a new one for the same owner.
+        Enter phone (e.g. <strong>9231231231</strong>). One number can have many pets  -  pick a pet or register a new one for the same owner.
       </p>
       <div class="toolbar">
         <input id="patientSearch" placeholder="Phone number..." style="flex:1; min-width:220px;" inputmode="tel">
@@ -111,7 +111,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=21"></script>
+  <script src="/api/static/app.js?v=22"></script>
   <script>
     let lastSearch = null;
 
@@ -182,7 +182,7 @@
       select.innerHTML =
         '<option value="">Select a pet...</option>' +
         pets.map((p, i) => {
-          const label = `${p.pet_name || 'Unnamed'} (${p.species || 'N/A'})${p.breed ? ' Â· ' + p.breed : ''}`;
+          const label = `${p.pet_name || 'Unnamed'} (${p.species || 'N/A'})${p.breed ? '  -  ' + p.breed : ''}`;
           return `<option value="${i}">${LabApp.escapeHtml(label)}</option>`;
         }).join('');
     }
@@ -196,9 +196,9 @@
       }
       box.style.display = 'block';
       box.innerHTML = `
-        <strong>Owner found:</strong> ${LabApp.escapeHtml(owner.patient_name || 'â€”')}
-        Â· Phone: ${LabApp.escapeHtml(owner.owner_phone || 'â€”')}
-        Â· Pets: ${petCount}
+        <strong>Owner found:</strong> ${LabApp.escapeHtml(owner.patient_name || ' - ')}
+         -  Phone: ${LabApp.escapeHtml(owner.owner_phone || ' - ')}
+         -  Pets: ${petCount}
       `;
     }
 

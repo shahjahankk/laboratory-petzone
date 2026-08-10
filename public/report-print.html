@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Print Report â€” PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=21">
+  <title>Print Report  -  Pet Zone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=22">
 </head>
 <body class="print-page">
   <header class="header no-print">
-    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">Pet Zone Laboratory</span></span></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">All Reports</a>
       <a href="#" class="btn btn-outline btn-sm" id="editBtn">Edit</a>
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=21"></script>
+  <script src="/api/static/app.js?v=22"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -31,11 +31,11 @@
     }
 
     function metaCell(label, value) {
-      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || 'â€”')}</span></div>`;
+      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || ' - ')}</span></div>`;
     }
 
     function renderReport(report) {
-      document.title = `${report.report_no} â€” PetZone Laboratory`;
+      document.title = `${report.report_no}  -  Pet Zone Laboratory`;
       document.getElementById('editBtn').href = `/report/${report.id}/edit`;
       document.getElementById('newForPetBtn').href =
         `/report/new?fresh=1&patient=${encodeURIComponent(report.owner_phone || report.pet_name || report.patient_name || '')}`;
@@ -66,16 +66,16 @@
                 <th class="col-name">Investigation</th>
                 <th class="col-result">Result</th>
                 <th class="col-unit">Unit</th>
-                <th class="col-ref">Reference (${LabApp.escapeHtml(species || 'â€”')})</th>
+                <th class="col-ref">Reference (${LabApp.escapeHtml(species || ' - ')})</th>
               </tr>
             </thead>
             <tbody>
               ${rows.map((r) => `
                 <tr>
                   <td>${LabApp.escapeHtml(r.name)}</td>
-                  <td class="result-val">${LabApp.escapeHtml(r.value || 'â€”')}</td>
-                  <td>${LabApp.escapeHtml(r.unit || 'â€”')}</td>
-                  <td>${LabApp.escapeHtml(r.reference_range || 'â€”')}</td>
+                  <td class="result-val">${LabApp.escapeHtml(r.value || ' - ')}</td>
+                  <td>${LabApp.escapeHtml(r.unit || ' - ')}</td>
+                  <td>${LabApp.escapeHtml(r.reference_range || ' - ')}</td>
                 </tr>
               `).join('')}
             </tbody>

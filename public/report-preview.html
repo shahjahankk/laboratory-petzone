@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 4 Â· Preview â€” PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=21">
+  <title>Step 4  -  Preview  -  Pet Zone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=22">
 </head>
 <body>
   <header class="header no-print">
-    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">Pet Zone Laboratory</span></span></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
@@ -18,7 +18,7 @@
   <div class="container">
     <div class="no-print">
       <h2 style="color:var(--blue);">Report Preview</h2>
-      <p class="hint" style="margin-bottom:16px;">Step 4 of 4 â€” Review, then save &amp; print</p>
+      <p class="hint" style="margin-bottom:16px;">Step 4 of 4  -  Review, then save &amp; print</p>
       <div id="stepper"></div>
       <div id="alert" class="alert alert-error" style="display:none;"></div>
       <div class="wizard-nav" style="margin-bottom:16px;">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=21"></script>
+  <script src="/api/static/app.js?v=22"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -44,16 +44,16 @@
     }
 
     function formatDate(v) {
-      return v ? String(v).slice(0, 10) : 'â€”';
+      return v ? String(v).slice(0, 10) : ' - ';
     }
 
     function metaCell(label, value) {
-      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || 'â€”')}</span></div>`;
+      return `<div class="meta-cell"><span class="k">${label}</span><span class="v">${LabApp.escapeHtml(value || ' - ')}</span></div>`;
     }
 
     function refFor(param, species) {
-      if (species === 'Cat') return param.reference_range_cat || param.reference_range || 'â€”';
-      return param.reference_range_dog || param.reference_range || 'â€”';
+      if (species === 'Cat') return param.reference_range_cat || param.reference_range || ' - ';
+      return param.reference_range_dog || param.reference_range || ' - ';
     }
 
     function renderPreview(draft, panels) {
@@ -93,8 +93,8 @@
               ${params.map((param) => `
                 <tr>
                   <td>${LabApp.escapeHtml(param.name)}</td>
-                  <td class="result-val">${LabApp.escapeHtml(values[param.id] || values[String(param.id)] || 'â€”')}</td>
-                  <td>${LabApp.escapeHtml(param.unit || 'â€”')}</td>
+                  <td class="result-val">${LabApp.escapeHtml(values[param.id] || values[String(param.id)] || ' - ')}</td>
+                  <td>${LabApp.escapeHtml(param.unit || ' - ')}</td>
                   <td>${LabApp.escapeHtml(refFor(param, species))}</td>
                 </tr>
               `).join('')}
