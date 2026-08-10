@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4  -  Preview  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=26">
+  <link rel="stylesheet" href="/api/static/styles.css?v=27">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=26"></script>
+  <script src="/api/static/app.js?v=27"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -124,7 +124,7 @@
             extra += `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>`;
           }
         }
-        return LabApp.wrapReportPrintPage(chrome, body + extra, isLast ? footer : '', i === 0);
+        return LabApp.wrapReportPrintPage(chrome, body + extra, footer, i === 0);
       }).join('');
 
       document.getElementById('sheet').innerHTML = pagesHtml;

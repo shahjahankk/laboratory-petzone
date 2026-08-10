@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=26">
+  <link rel="stylesheet" href="/api/static/styles.css?v=27">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=26"></script>
+  <script src="/api/static/app.js?v=27"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -109,7 +109,7 @@
             extra += `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.remarks)}</div></div>`;
           }
         }
-        return LabApp.wrapReportPrintPage(chrome, body + extra, isLast ? footer : '', i === 0);
+        return LabApp.wrapReportPrintPage(chrome, body + extra, footer, i === 0);
       }).join('');
 
       document.getElementById('sheet').innerHTML = pagesHtml;
