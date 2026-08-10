@@ -1,7 +1,7 @@
 const LabApp = {
   tokenKey: 'lab_token',
   draftKey: 'lab_report_draft',
-  version: 5,
+  version: 6,
 
   getToken() {
     return localStorage.getItem(this.tokenKey) || '';

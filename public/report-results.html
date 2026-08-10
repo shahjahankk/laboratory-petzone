@@ -4,18 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=5">
+  <link rel="stylesheet" href="/api/static/styles.css?v=6">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
     tr.param-off { opacity: 0.45; background: #f9fafb; }
     tr.param-off .val { pointer-events: none; background: #f3f4f6; }
     .results-hint { margin-bottom: 12px; }
+    .results-toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+    .add-tests-panel {
+      display: none; margin-bottom: 16px; padding: 14px;
+      border: 2px dashed #93c5fd; border-radius: 12px; background: #f8fbff;
+    }
+    .add-tests-panel.open { display: block; }
+    .add-tests-panel h4 { margin: 0 0 10px; color: var(--blue); font-size: 15px; }
+    .btn-add-test {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-weight: 700;
+    }
+    .btn-add-test .plus {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--blue); color: #fff; font-size: 16px; line-height: 1;
+    }
   </style>
 </head>
 <body>
   <header class="header">
-    <a href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"></a>
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
@@ -29,10 +48,27 @@
     <div id="alert" class="alert alert-error" style="display:none;"></div>
 
     <div class="card" style="margin-bottom:16px;">
-      <p class="hint" id="summary" style="margin-bottom:8px;"></p>
-      <p class="hint results-hint">
-        All fields are checked by default. Uncheck any test you are not running — it will not appear on print.
-      </p>
+      <div class="results-toolbar">
+        <div>
+          <p class="hint" id="summary" style="margin:0 0 4px;"></p>
+          <p class="hint results-hint" style="margin:0;">
+            All fields are checked by default. Uncheck any test you are not running.
+          </p>
+        </div>
+        <button type="button" class="btn btn-pink btn-sm btn-add-test" id="addTestBtn">
+          <span class="plus" aria-hidden="true">+</span> Add test
+        </button>
+      </div>
+
+      <div id="addTestsPanel" class="add-tests-panel">
+        <h4>Add another report panel</h4>
+        <p class="hint" style="margin-bottom:10px;">Select a panel to append — current values stay saved.</p>
+        <div class="grid-3" id="extraPanelChecks"></div>
+        <div style="margin-top:10px;">
+          <button type="button" class="btn btn-outline btn-sm" id="closeAddTestsBtn">Close</button>
+        </div>
+      </div>
+
       <div id="resultsArea"><p class="hint">Loading...</p></div>
     </div>
 
@@ -42,16 +78,19 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=5"></script>
+  <script src="/api/static/app.js?v=6"></script>
   <script>
+    let allPanels = [];
+    let species = 'Dog';
+
     function showAlert(msg) {
       const el = document.getElementById('alert');
       el.style.display = msg ? 'block' : 'none';
       el.textContent = msg || '';
     }
 
-    function refFor(param, species) {
-      if (species === 'Cat') return param.reference_range_cat || param.reference_range || '—';
+    function refFor(param, sp) {
+      if (sp === 'Cat') return param.reference_range_cat || param.reference_range || '—';
       return param.reference_range_dog || param.reference_range || '—';
     }
 
@@ -63,7 +102,8 @@
     }
 
     function collectState() {
-      const results = {};
+      const draft = LabApp.getDraft();
+      const results = { ...(draft.results || {}) };
       const included = [];
       const snapshot = [];
       document.querySelectorAll('#resultsArea tr[data-parameter-id]').forEach((tr) => {
@@ -74,7 +114,108 @@
         results[String(id)] = input ? input.value.trim() : '';
         if (checked) included.push(id);
       });
-      return { results, included_parameter_ids: included, parameter_ids_snapshot: snapshot };
+      return {
+        panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
+        results,
+        included_parameter_ids: included,
+        parameter_ids_snapshot: snapshot,
+      };
+    }
+
+    function persistForm() {
+      LabApp.saveDraft(collectState());
+    }
+
+    function selectedPanels() {
+      const idSet = new Set((LabApp.getDraft().panel_ids || []).map(Number));
+      return allPanels.filter((p) => idSet.has(Number(p.id)));
+    }
+
+    function renderResults() {
+      const draft = LabApp.getDraft();
+      const selected = selectedPanels();
+      const saved = draft.results || {};
+      const allParamIds = selected.flatMap((p) => (p.parameters || []).map((x) => Number(x.id)));
+      const includedSet = new Set(LabApp.resolveIncludedParameterIds(allParamIds, draft));
+      const area = document.getElementById('resultsArea');
+
+      if (!selected.length) {
+        area.innerHTML = '<p class="hint">No tests selected. Use <strong>+ Add test</strong> or go back.</p>';
+        renderAddPicker();
+        return;
+      }
+
+      area.innerHTML = selected.map((panel) => `
+        <div class="result-block" data-panel-id="${panel.id}">
+          <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="include-col">Print</th>
+                <th style="width:36%">Parameter</th>
+                <th style="width:18%">Result</th>
+                <th style="width:14%">Unit</th>
+                <th style="width:24%">Reference (${LabApp.escapeHtml(species)})</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(panel.parameters || []).map((param) => {
+                const on = includedSet.has(Number(param.id));
+                const val = saved[param.id] || saved[String(param.id)] || '';
+                return `
+                <tr data-parameter-id="${param.id}" class="${on ? '' : 'param-off'}">
+                  <td class="include-col">
+                    <input class="include" type="checkbox" ${on ? 'checked' : ''} title="Include on printed report">
+                  </td>
+                  <td>${LabApp.escapeHtml(param.name)}</td>
+                  <td><input class="val" value="${LabApp.escapeHtml(val)}" placeholder="Value" inputmode="decimal" ${on ? '' : 'disabled'}></td>
+                  <td>${LabApp.escapeHtml(param.unit || '—')}</td>
+                  <td>${LabApp.escapeHtml(refFor(param, species))}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `).join('');
+
+      renderAddPicker();
+    }
+
+    function renderAddPicker() {
+      const chosen = new Set((LabApp.getDraft().panel_ids || []).map(Number));
+      const available = allPanels.filter((p) => !chosen.has(Number(p.id)));
+      const box = document.getElementById('extraPanelChecks');
+      const addBtn = document.getElementById('addTestBtn');
+
+      if (!available.length) {
+        box.innerHTML = '<p class="hint">All available panels are already added.</p>';
+        addBtn.disabled = false;
+        return;
+      }
+
+      box.innerHTML = available.map((p) => `
+        <button type="button" class="panel-check" data-add-panel="${p.id}" style="width:100%; text-align:left; font:inherit;">
+          <span class="plus" style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;align-items:center;justify-content:center;flex-shrink:0;">+</span>
+          <span>
+            <strong>${LabApp.escapeHtml(p.code)}</strong><br>
+            <small style="color:var(--gray-500)">${LabApp.escapeHtml(p.name)}</small>
+          </span>
+        </button>
+      `).join('');
+    }
+
+    function addPanel(panelId) {
+      persistForm();
+      const draft = LabApp.getDraft();
+      const ids = [...new Set([...(draft.panel_ids || []).map(Number), Number(panelId)].filter(Boolean))];
+      LabApp.saveDraft({ panel_ids: ids });
+      // New panel params default to included via resolveIncludedParameterIds (not in snapshot)
+      showAlert('');
+      renderResults();
+      document.getElementById('addTestsPanel').classList.remove('open');
+
+      const block = document.querySelector(`.result-block[data-panel-id="${panelId}"]`);
+      if (block) block.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function goNext() {
@@ -93,6 +234,23 @@
       goNext();
     });
 
+    document.getElementById('addTestBtn').addEventListener('click', () => {
+      persistForm();
+      const panel = document.getElementById('addTestsPanel');
+      panel.classList.toggle('open');
+      renderAddPicker();
+    });
+
+    document.getElementById('closeAddTestsBtn').addEventListener('click', () => {
+      document.getElementById('addTestsPanel').classList.remove('open');
+    });
+
+    document.getElementById('extraPanelChecks').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-add-panel]');
+      if (!btn) return;
+      addPanel(Number(btn.getAttribute('data-add-panel')));
+    });
+
     document.getElementById('resultsArea').addEventListener('change', (e) => {
       if (e.target.classList.contains('include')) {
         syncRowState(e.target.closest('tr'));
@@ -106,56 +264,15 @@
         const draft = LabApp.guardStep(['patient', 'tests']);
         if (!draft) return;
 
+        species = draft.species;
         document.getElementById('logoutBtn').onclick = () => LabApp.logout();
         document.getElementById('stepper').innerHTML = LabApp.renderStepper(3);
         document.getElementById('summary').innerHTML =
           `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> · Species: <strong>${LabApp.escapeHtml(draft.species)}</strong>`;
 
         const tpl = await LabApp.api('/api/templates');
-        const idSet = new Set((draft.panel_ids || []).map(Number));
-        const selected = (tpl.panels || []).filter((p) => idSet.has(Number(p.id)));
-        const saved = draft.results || {};
-        const allParamIds = selected.flatMap((p) => (p.parameters || []).map((x) => Number(x.id)));
-        const includedSet = new Set(LabApp.resolveIncludedParameterIds(allParamIds, draft));
-
-        if (!selected.length) {
-          document.getElementById('resultsArea').innerHTML =
-            '<p class="hint">No tests selected. Go back and choose tests.</p>';
-          return;
-        }
-
-        document.getElementById('resultsArea').innerHTML = selected.map((panel) => `
-          <div class="result-block">
-            <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th class="include-col">Print</th>
-                  <th style="width:36%">Parameter</th>
-                  <th style="width:18%">Result</th>
-                  <th style="width:14%">Unit</th>
-                  <th style="width:24%">Reference (${LabApp.escapeHtml(draft.species)})</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(panel.parameters || []).map((param) => {
-                  const on = includedSet.has(Number(param.id));
-                  const val = saved[param.id] || saved[String(param.id)] || '';
-                  return `
-                  <tr data-parameter-id="${param.id}" class="${on ? '' : 'param-off'}">
-                    <td class="include-col">
-                      <input class="include" type="checkbox" ${on ? 'checked' : ''} title="Include on printed report">
-                    </td>
-                    <td>${LabApp.escapeHtml(param.name)}</td>
-                    <td><input class="val" value="${LabApp.escapeHtml(val)}" placeholder="Value" inputmode="decimal" ${on ? '' : 'disabled'}></td>
-                    <td>${LabApp.escapeHtml(param.unit || '—')}</td>
-                    <td>${LabApp.escapeHtml(refFor(param, draft.species))}</td>
-                  </tr>`;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        `).join('');
+        allPanels = tpl.panels || [];
+        renderResults();
       } catch (err) {
         showAlert(err.message || 'Failed to load results page');
       }
