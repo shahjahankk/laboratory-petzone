@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/css/styles.css?v=3">
+  <link rel="stylesheet" href="/api/static/styles.css?v=4">
 </head>
 <body class="print-page">
   <header class="header no-print">
-    <a href="/dashboard"><img src="/img/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/img/petzonelogo.svg'"></a>
+    <a href="/dashboard"><img src="/api/static/img/petzonelogo.svg" alt="PetZone" class="logo-lg" ></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">All Reports</a>
       <a href="#" class="btn btn-outline btn-sm" id="editBtn">Edit</a>
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/js/app.js?v=3"></script>
+  <script src="/api/static/app.js?v=4"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -74,7 +74,7 @@
         <div class="report-topbar"></div>
         <div class="report-header">
           <div class="brand">
-            <img src="/img/petzonelogo.png" alt="PetZone" onerror="this.src='/img/petzonelogo.svg'">
+            <img src="/api/static/img/petzonelogo.svg" alt="PetZone" >
             <div>
               <h1>PetZone Laboratory</h1>
               <div class="sub">Diagnostic Laboratory Report</div>

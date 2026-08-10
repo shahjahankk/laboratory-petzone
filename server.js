@@ -68,7 +68,9 @@ async function healthHandler(req, res) {
       preview: fs.existsSync(path.join(publicDir, 'report-preview.html')),
       css: fs.existsSync(path.join(publicDir, 'css', 'styles.css')),
       js: fs.existsSync(path.join(publicDir, 'js', 'app.js')),
+      logo: fs.existsSync(path.join(publicDir, 'img', 'petzonelogo.svg')),
     },
+    assetsVia: '/api/static/*',
   });
 }
 
@@ -85,6 +87,29 @@ app.use('/api/auth', authRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/patients', patientsRoutes);
+
+// Serve CSS/JS/img via /api/static — Apache/LiteSpeed often 404s /css /js /img
+// before Passenger; /api/* always reaches Node.
+app.get('/api/static/styles.css', (req, res) => {
+  const full = path.join(publicDir, 'css', 'styles.css');
+  if (!fs.existsSync(full)) return res.status(404).type('text').send('styles.css missing');
+  res.set('Cache-Control', 'public, max-age=60');
+  return res.type('text/css').sendFile(full);
+});
+app.get('/api/static/app.js', (req, res) => {
+  const full = path.join(publicDir, 'js', 'app.js');
+  if (!fs.existsSync(full)) return res.status(404).type('text').send('app.js missing');
+  res.set('Cache-Control', 'public, max-age=60');
+  return res.type('application/javascript').sendFile(full);
+});
+app.get('/api/static/img/:name', (req, res) => {
+  const name = path.basename(String(req.params.name || ''));
+  if (!name || name !== req.params.name) return res.status(400).end();
+  const full = path.join(publicDir, 'img', name);
+  if (!fs.existsSync(full)) return res.status(404).end();
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.sendFile(full);
+});
 
 // HTML pages BEFORE static — avoids /report/new being treated as report id "new"
 app.get('/', (req, res) => sendPublic(res, 'index.html'));

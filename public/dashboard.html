@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/css/styles.css?v=3">
+  <link rel="stylesheet" href="/api/static/styles.css?v=4">
 </head>
 <body>
   <header class="header no-print">
-    <a href="/dashboard"><img src="/img/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/img/petzonelogo.svg'"></a>
+    <a href="/dashboard"><img src="/api/static/img/petzonelogo.svg" alt="PetZone" class="logo-lg" ></a>
     <nav>
       <span id="userLabel" style="color:var(--gray-500); font-size:14px;"></span>
       <a href="/report/new?fresh=1" class="btn btn-pink btn-sm">+ New Report</a>
@@ -51,7 +51,7 @@
     </div>
   </div>
 
-  <script src="/js/app.js?v=3"></script>
+  <script src="/api/static/app.js?v=4"></script>
   <script>
     function dateOnly(v) {
       return v ? String(v).slice(0, 10) : '-';
