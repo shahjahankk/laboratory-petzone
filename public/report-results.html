@@ -4,11 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=4">
+  <link rel="stylesheet" href="/api/static/styles.css?v=5">
+  <style>
+    .include-col { width: 56px; text-align: center; }
+    .include-col input { width: auto; margin: 0; }
+    tr.param-off { opacity: 0.45; background: #f9fafb; }
+    tr.param-off .val { pointer-events: none; background: #f3f4f6; }
+    .results-hint { margin-bottom: 12px; }
+  </style>
 </head>
 <body>
   <header class="header">
-    <a href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg" ></a>
+    <a href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"></a>
     <nav>
       <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
@@ -17,12 +24,15 @@
 
   <div class="container" style="max-width:960px;">
     <h2 style="color:var(--blue);">Enter Results</h2>
-    <p class="hint" style="margin-bottom:16px;">Step 3 of 4 — Values only (references follow Dog/Cat)</p>
+    <p class="hint" style="margin-bottom:16px;">Step 3 of 4 — Uncheck fields you do not want on the printed report</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
 
     <div class="card" style="margin-bottom:16px;">
-      <p class="hint" id="summary" style="margin-bottom:12px;"></p>
+      <p class="hint" id="summary" style="margin-bottom:8px;"></p>
+      <p class="hint results-hint">
+        All fields are checked by default. Uncheck any test you are not running — it will not appear on print.
+      </p>
       <div id="resultsArea"><p class="hint">Loading...</p></div>
     </div>
 
@@ -32,7 +42,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=4"></script>
+  <script src="/api/static/app.js?v=5"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -45,26 +55,48 @@
       return param.reference_range_dog || param.reference_range || '—';
     }
 
-    function collectResults() {
+    function syncRowState(tr) {
+      const on = tr.querySelector('.include').checked;
+      tr.classList.toggle('param-off', !on);
+      const input = tr.querySelector('.val');
+      if (input) input.disabled = !on;
+    }
+
+    function collectState() {
       const results = {};
+      const included = [];
+      const snapshot = [];
       document.querySelectorAll('#resultsArea tr[data-parameter-id]').forEach((tr) => {
-        const id = String(tr.dataset.parameterId);
+        const id = Number(tr.dataset.parameterId);
+        snapshot.push(id);
         const input = tr.querySelector('.val');
-        results[id] = input ? input.value.trim() : '';
+        const checked = tr.querySelector('.include')?.checked;
+        results[String(id)] = input ? input.value.trim() : '';
+        if (checked) included.push(id);
       });
-      return results;
+      return { results, included_parameter_ids: included, parameter_ids_snapshot: snapshot };
     }
 
     function goNext() {
       showAlert('');
-      const results = collectResults();
-      LabApp.saveDraft({ results });
+      const state = collectState();
+      if (!state.included_parameter_ids.length) {
+        showAlert('Keep at least one field checked to print on the report.');
+        return;
+      }
+      LabApp.saveDraft(state);
       window.location.assign('/report/new/preview');
     }
 
     document.getElementById('nextBtn').addEventListener('click', (e) => {
       e.preventDefault();
       goNext();
+    });
+
+    document.getElementById('resultsArea').addEventListener('change', (e) => {
+      if (e.target.classList.contains('include')) {
+        syncRowState(e.target.closest('tr'));
+      }
     });
 
     (async () => {
@@ -83,6 +115,8 @@
         const idSet = new Set((draft.panel_ids || []).map(Number));
         const selected = (tpl.panels || []).filter((p) => idSet.has(Number(p.id)));
         const saved = draft.results || {};
+        const allParamIds = selected.flatMap((p) => (p.parameters || []).map((x) => Number(x.id)));
+        const includedSet = new Set(LabApp.resolveIncludedParameterIds(allParamIds, draft));
 
         if (!selected.length) {
           document.getElementById('resultsArea').innerHTML =
@@ -96,21 +130,28 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width:40%">Parameter</th>
-                  <th style="width:20%">Result</th>
-                  <th style="width:15%">Unit</th>
-                  <th style="width:25%">Reference (${LabApp.escapeHtml(draft.species)})</th>
+                  <th class="include-col">Print</th>
+                  <th style="width:36%">Parameter</th>
+                  <th style="width:18%">Result</th>
+                  <th style="width:14%">Unit</th>
+                  <th style="width:24%">Reference (${LabApp.escapeHtml(draft.species)})</th>
                 </tr>
               </thead>
               <tbody>
-                ${(panel.parameters || []).map((param) => `
-                  <tr data-parameter-id="${param.id}">
+                ${(panel.parameters || []).map((param) => {
+                  const on = includedSet.has(Number(param.id));
+                  const val = saved[param.id] || saved[String(param.id)] || '';
+                  return `
+                  <tr data-parameter-id="${param.id}" class="${on ? '' : 'param-off'}">
+                    <td class="include-col">
+                      <input class="include" type="checkbox" ${on ? 'checked' : ''} title="Include on printed report">
+                    </td>
                     <td>${LabApp.escapeHtml(param.name)}</td>
-                    <td><input class="val" value="${LabApp.escapeHtml(saved[param.id] || saved[String(param.id)] || '')}" placeholder="Value" inputmode="decimal"></td>
+                    <td><input class="val" value="${LabApp.escapeHtml(val)}" placeholder="Value" inputmode="decimal" ${on ? '' : 'disabled'}></td>
                     <td>${LabApp.escapeHtml(param.unit || '—')}</td>
                     <td>${LabApp.escapeHtml(refFor(param, draft.species))}</td>
-                  </tr>
-                `).join('')}
+                  </tr>`;
+                }).join('')}
               </tbody>
             </table>
           </div>

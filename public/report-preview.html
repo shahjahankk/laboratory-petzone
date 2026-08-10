@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4 · Preview — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=4">
+  <link rel="stylesheet" href="/api/static/styles.css?v=5">
 </head>
 <body>
   <header class="header no-print">
@@ -33,7 +33,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Building preview...</div>
   </div>
 
-  <script src="/api/static/app.js?v=4"></script>
+  <script src="/api/static/app.js?v=5"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -60,8 +60,13 @@
       const idSet = new Set((draft.panel_ids || []).map(Number));
       const selected = panels.filter((p) => idSet.has(Number(p.id)));
       const values = draft.results || {};
+      const allParamIds = selected.flatMap((p) => (p.parameters || []).map((x) => Number(x.id)));
+      const included = new Set(LabApp.resolveIncludedParameterIds(allParamIds, draft));
 
-      const panelsHtml = selected.map((panel) => `
+      const panelsHtml = selected.map((panel) => {
+        const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
+        if (!params.length) return '';
+        return `
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
           <table>
@@ -74,7 +79,7 @@
               </tr>
             </thead>
             <tbody>
-              ${(panel.parameters || []).map((param) => `
+              ${params.map((param) => `
                 <tr>
                   <td>${LabApp.escapeHtml(param.name)}</td>
                   <td class="result-val">${LabApp.escapeHtml(values[param.id] || values[String(param.id)] || '—')}</td>
@@ -84,8 +89,8 @@
               `).join('')}
             </tbody>
           </table>
-        </section>
-      `).join('') || '<p class="hint">No tests in this draft.</p>';
+        </section>`;
+      }).join('') || '<p class="hint">No tests in this draft.</p>';
 
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>
@@ -126,6 +131,10 @@
     }
 
     function buildPayload(draft) {
+      const included = Array.isArray(draft.included_parameter_ids) && draft.included_parameter_ids.length
+        ? draft.included_parameter_ids.map(Number).filter(Boolean)
+        : Object.keys(draft.results || {}).map(Number).filter(Boolean);
+
       return {
         patient_name: draft.patient_name,
         owner_phone: draft.owner_phone,
@@ -140,10 +149,10 @@
         clinical_notes: '',
         remarks: draft.remarks,
         status: draft.status || 'final',
-        panel_ids: (draft.panel_ids || []).map(Number),
-        results: Object.keys(draft.results || {}).map((parameter_id) => ({
-          parameter_id: Number(parameter_id),
-          value: draft.results[parameter_id],
+        panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
+        results: included.map((parameter_id) => ({
+          parameter_id,
+          value: draft.results?.[parameter_id] ?? draft.results?.[String(parameter_id)] ?? '',
           flag: null,
           remarks: null,
         })),

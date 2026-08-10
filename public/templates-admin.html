@@ -4,43 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Tests — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=4">
+  <link rel="stylesheet" href="/api/static/styles.css?v=5">
   <style>
-    .panel-block { margin-bottom: 16px; }
-    .panel-head {
-      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-      justify-content: space-between; margin-bottom: 12px;
-    }
-    .panel-head h3 { margin: 0; color: var(--blue); font-size: 1.05rem; }
-    .panel-meta { color: var(--gray-500); font-size: 13px; }
     .inactive-tag {
-      display: inline-block; margin-left: 8px; padding: 2px 8px;
-      border-radius: 4px; background: #fee2e2; color: #991b1b; font-size: 12px;
+      display: inline-block; margin-left: 6px; padding: 1px 7px;
+      border-radius: 4px; background: #fee2e2; color: #991b1b; font-size: 11px;
     }
-    .param-table input, .param-table select, .add-form input, .add-form select, .add-form textarea {
-      width: 100%; min-width: 0;
+    .panel-tab {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border: 2px solid var(--gray-200);
+      border-radius: 12px; cursor: pointer; background: #fff;
+      text-align: left; width: 100%; font: inherit; color: inherit;
     }
-    .add-form {
+    .panel-tab:hover { border-color: #93c5fd; }
+    .panel-tab.active { border-color: var(--blue); background: #EFF6FF; }
+    .panel-tab.add-tab {
+      border-style: dashed; color: var(--blue); justify-content: center; align-items: center;
+      min-height: 64px; font-weight: 700;
+    }
+    .panel-tab.add-tab.active { background: #fdf2f8; border-color: var(--pink-dark); color: var(--blue); }
+    .param-table input, .add-form input { width: 100%; min-width: 0; }
+    .add-form, .panel-edit {
       display: grid; gap: 10px;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      align-items: end; margin-top: 12px; padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
+      align-items: end;
     }
-    .add-form .full { grid-column: 1 / -1; }
+    .add-form .full, .panel-edit .full { grid-column: 1 / -1; }
     .add-form label, .panel-edit label {
       display: block; font-size: 12px; color: var(--gray-500); margin-bottom: 4px;
     }
-    .panel-edit {
-      display: grid; gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      margin-bottom: 12px;
-    }
     .actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .param-table td { vertical-align: middle; }
-    details.panel-block > summary {
-      cursor: pointer; list-style: none; padding: 4px 0;
-    }
-    details.panel-block > summary::-webkit-details-marker { display: none; }
+    #editorCard { display: none; }
   </style>
 </head>
 <body>
@@ -58,7 +53,7 @@
     <div class="toolbar">
       <div>
         <h2 style="color:var(--blue);">Manage Tests</h2>
-        <p class="hint">Add or edit lab panels and parameters. Active panels appear in the new-report wizard.</p>
+        <p class="hint">Select a panel tab to edit it, or choose Add new panel.</p>
       </div>
     </div>
 
@@ -66,36 +61,19 @@
     <div id="okAlert" class="alert alert-ok" style="display:none;"></div>
 
     <div class="card" style="margin-bottom:16px;">
-      <h3 class="section-title">Add new panel</h3>
-      <form id="addPanelForm" class="add-form">
-        <div>
-          <label for="newPanelCode">Code *</label>
-          <input id="newPanelCode" required placeholder="e.g. THYROID" maxlength="30">
-        </div>
-        <div>
-          <label for="newPanelName">Name *</label>
-          <input id="newPanelName" required placeholder="e.g. Thyroid Panel" maxlength="120">
-        </div>
-        <div>
-          <label for="newPanelOrder">Order</label>
-          <input id="newPanelOrder" type="number" value="10">
-        </div>
-        <div class="full">
-          <label for="newPanelDesc">Description</label>
-          <input id="newPanelDesc" placeholder="Short description" maxlength="255">
-        </div>
-        <div>
-          <button type="submit" class="btn btn-primary btn-sm">Create panel</button>
-        </div>
-      </form>
+      <h3 class="section-title">Panels</h3>
+      <div class="grid-3" id="panelTabs"><p class="hint">Loading...</p></div>
     </div>
 
-    <div id="panelsList"><p class="hint">Loading...</p></div>
+    <div class="card" id="editorCard">
+      <div id="editorBody"></div>
+    </div>
   </div>
 
-  <script src="/api/static/app.js?v=4"></script>
+  <script src="/api/static/app.js?v=5"></script>
   <script>
     let panels = [];
+    let selectedId = null; // panel id or 'new'
 
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -115,144 +93,220 @@
       return LabApp.escapeHtml(v == null ? '' : String(v));
     }
 
-    async function loadPanels() {
-      const data = await LabApp.api('/api/templates/admin');
-      panels = data.panels || [];
-      renderPanels();
+    function getSelectedPanel() {
+      if (selectedId == null || selectedId === 'new') return null;
+      return panels.find((p) => Number(p.id) === Number(selectedId)) || null;
     }
 
-    function renderPanels() {
-      const box = document.getElementById('panelsList');
-      if (!panels.length) {
-        box.innerHTML = '<div class="card"><p class="hint">No panels yet. Create one above.</p></div>';
+    async function loadPanels(preferId) {
+      const data = await LabApp.api('/api/templates/admin');
+      panels = data.panels || [];
+      if (preferId != null) selectedId = preferId;
+      if (selectedId !== 'new' && selectedId != null && !getSelectedPanel()) {
+        selectedId = panels.length ? panels[0].id : 'new';
+      }
+      if (selectedId == null) {
+        selectedId = panels.length ? panels[0].id : 'new';
+      }
+      renderTabs();
+      renderEditor();
+    }
+
+    function renderTabs() {
+      const box = document.getElementById('panelTabs');
+      const tabs = panels.map((p) => {
+        const active = Number(selectedId) === Number(p.id);
+        const on = Number(p.is_active) === 1;
+        const count = (p.parameters || []).length;
+        return `
+          <button type="button" class="panel-tab ${active ? 'active' : ''}" data-select-panel="${p.id}">
+            <span>
+              <strong>${esc(p.code)}</strong>
+              ${on ? '' : '<span class="inactive-tag">Off</span>'}
+              <br>
+              <small style="color:var(--gray-500)">${esc(p.name)}</small>
+              <br>
+              <small style="color:var(--gray-500)">${count} param(s)</small>
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      box.innerHTML = tabs + `
+        <button type="button" class="panel-tab add-tab ${selectedId === 'new' ? 'active' : ''}" data-select-panel="new">
+          + Add new panel
+        </button>
+      `;
+    }
+
+    function renderNewPanelForm() {
+      return `
+        <h3 class="section-title">Add new panel</h3>
+        <p class="hint" style="margin-bottom:12px;">Create a panel first, then add its parameters.</p>
+        <form id="addPanelForm" class="add-form">
+          <div>
+            <label for="newPanelCode">Code *</label>
+            <input id="newPanelCode" required placeholder="e.g. THYROID" maxlength="30">
+          </div>
+          <div>
+            <label for="newPanelName">Name *</label>
+            <input id="newPanelName" required placeholder="e.g. Thyroid Panel" maxlength="120">
+          </div>
+          <div>
+            <label for="newPanelOrder">Order</label>
+            <input id="newPanelOrder" type="number" value="10">
+          </div>
+          <div class="full">
+            <label for="newPanelDesc">Description</label>
+            <input id="newPanelDesc" placeholder="Short description" maxlength="255">
+          </div>
+          <div>
+            <button type="submit" class="btn btn-primary btn-sm">Create panel</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function renderPanelEditor(panel) {
+      const active = Number(panel.is_active) === 1;
+      const params = panel.parameters || [];
+      return `
+        <div class="panel-head" style="margin-bottom:12px;">
+          <h3 class="section-title" style="margin:0;">
+            ${esc(panel.code)} — ${esc(panel.name)}
+            ${active ? '' : '<span class="inactive-tag">Inactive</span>'}
+          </h3>
+          <p class="hint" style="margin:6px 0 0;">Edit panel details and parameters below.</p>
+        </div>
+
+        <div class="panel-edit" id="panelEditFields" style="margin-bottom:16px;">
+          <div>
+            <label>Name</label>
+            <input data-panel-field="name" value="${esc(panel.name)}">
+          </div>
+          <div>
+            <label>Description</label>
+            <input data-panel-field="description" value="${esc(panel.description || '')}">
+          </div>
+          <div>
+            <label>Order</label>
+            <input data-panel-field="display_order" type="number" value="${esc(panel.display_order)}">
+          </div>
+          <div class="actions" style="align-self:end;">
+            <button type="button" class="btn btn-primary btn-sm" data-save-panel="${panel.id}">Save panel</button>
+            <button type="button" class="btn btn-outline btn-sm" data-toggle-panel="${panel.id}" data-active="${active ? 1 : 0}">
+              ${active ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
+        </div>
+
+        <h3 class="section-title">Parameters</h3>
+        <div class="table-wrap">
+          <table class="data param-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Unit</th>
+                <th>Dog ref</th>
+                <th>Cat ref</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${params.length ? params.map((p) => `
+                <tr data-param-id="${p.id}">
+                  <td><strong>${esc(p.code)}</strong></td>
+                  <td><input data-param-field="name" value="${esc(p.name)}"></td>
+                  <td><input data-param-field="unit" value="${esc(p.unit || '')}"></td>
+                  <td><input data-param-field="reference_range_dog" value="${esc(p.reference_range_dog || '')}"></td>
+                  <td><input data-param-field="reference_range_cat" value="${esc(p.reference_range_cat || '')}"></td>
+                  <td><input data-param-field="display_order" type="number" value="${esc(p.display_order)}" style="width:70px;"></td>
+                  <td>${Number(p.is_active) === 1 ? 'Active' : 'Inactive'}</td>
+                  <td class="actions">
+                    <button type="button" class="btn btn-primary btn-sm" data-save-param="${p.id}">Save</button>
+                    <button type="button" class="btn btn-outline btn-sm" data-toggle-param="${p.id}" data-active="${Number(p.is_active) === 1 ? 1 : 0}">
+                      ${Number(p.is_active) === 1 ? 'Off' : 'On'}
+                    </button>
+                  </td>
+                </tr>
+              `).join('') : `<tr><td colspan="8" class="hint">No parameters yet — add one below.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="section-title" style="margin-top:16px;">Add parameter</h3>
+        <form class="add-form" data-add-param="${panel.id}">
+          <div>
+            <label>Code *</label>
+            <input name="code" required placeholder="e.g. T4" maxlength="40">
+          </div>
+          <div>
+            <label>Name *</label>
+            <input name="name" required placeholder="Parameter name" maxlength="150">
+          </div>
+          <div>
+            <label>Unit</label>
+            <input name="unit" placeholder="e.g. µg/dL" maxlength="40">
+          </div>
+          <div>
+            <label>Dog ref</label>
+            <input name="reference_range_dog" placeholder="e.g. 1.0 - 4.0">
+          </div>
+          <div>
+            <label>Cat ref</label>
+            <input name="reference_range_cat" placeholder="e.g. 0.8 - 4.7">
+          </div>
+          <div>
+            <label>Order</label>
+            <input name="display_order" type="number" value="${params.length + 1}">
+          </div>
+          <div>
+            <button type="submit" class="btn btn-pink btn-sm">Add parameter</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function renderEditor() {
+      const card = document.getElementById('editorCard');
+      const body = document.getElementById('editorBody');
+      card.style.display = 'block';
+
+      if (selectedId === 'new') {
+        body.innerHTML = renderNewPanelForm();
         return;
       }
 
-      box.innerHTML = panels.map((panel) => {
-        const active = Number(panel.is_active) === 1;
-        const params = panel.parameters || [];
-        return `
-          <details class="card panel-block" open data-panel-id="${panel.id}">
-            <summary>
-              <div class="panel-head">
-                <div>
-                  <h3>${esc(panel.name)}
-                    ${active ? '' : '<span class="inactive-tag">Inactive</span>'}
-                  </h3>
-                  <div class="panel-meta">${esc(panel.code)} · ${params.length} parameter(s) · order ${esc(panel.display_order)}</div>
-                </div>
-              </div>
-            </summary>
-
-            <div class="panel-edit">
-              <div>
-                <label>Name</label>
-                <input data-panel-field="name" value="${esc(panel.name)}">
-              </div>
-              <div>
-                <label>Description</label>
-                <input data-panel-field="description" value="${esc(panel.description || '')}">
-              </div>
-              <div>
-                <label>Order</label>
-                <input data-panel-field="display_order" type="number" value="${esc(panel.display_order)}">
-              </div>
-              <div class="actions" style="align-self:end;">
-                <button type="button" class="btn btn-primary btn-sm" data-save-panel="${panel.id}">Save panel</button>
-                <button type="button" class="btn btn-outline btn-sm" data-toggle-panel="${panel.id}" data-active="${active ? 1 : 0}">
-                  ${active ? 'Deactivate' : 'Activate'}
-                </button>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table class="data param-table">
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Unit</th>
-                    <th>Dog ref</th>
-                    <th>Cat ref</th>
-                    <th>Order</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${params.length ? params.map((p) => `
-                    <tr data-param-id="${p.id}">
-                      <td><strong>${esc(p.code)}</strong></td>
-                      <td><input data-param-field="name" value="${esc(p.name)}"></td>
-                      <td><input data-param-field="unit" value="${esc(p.unit || '')}"></td>
-                      <td><input data-param-field="reference_range_dog" value="${esc(p.reference_range_dog || '')}"></td>
-                      <td><input data-param-field="reference_range_cat" value="${esc(p.reference_range_cat || '')}"></td>
-                      <td><input data-param-field="display_order" type="number" value="${esc(p.display_order)}" style="width:70px;"></td>
-                      <td>${Number(p.is_active) === 1 ? 'Active' : 'Inactive'}</td>
-                      <td class="actions">
-                        <button type="button" class="btn btn-primary btn-sm" data-save-param="${p.id}">Save</button>
-                        <button type="button" class="btn btn-outline btn-sm" data-toggle-param="${p.id}" data-active="${Number(p.is_active) === 1 ? 1 : 0}">
-                          ${Number(p.is_active) === 1 ? 'Off' : 'On'}
-                        </button>
-                      </td>
-                    </tr>
-                  `).join('') : `<tr><td colspan="8" class="hint">No parameters yet — add one below.</td></tr>`}
-                </tbody>
-              </table>
-            </div>
-
-            <form class="add-form" data-add-param="${panel.id}">
-              <div>
-                <label>Code *</label>
-                <input name="code" required placeholder="e.g. T4" maxlength="40">
-              </div>
-              <div>
-                <label>Name *</label>
-                <input name="name" required placeholder="Parameter name" maxlength="150">
-              </div>
-              <div>
-                <label>Unit</label>
-                <input name="unit" placeholder="e.g. µg/dL" maxlength="40">
-              </div>
-              <div>
-                <label>Dog ref</label>
-                <input name="reference_range_dog" placeholder="e.g. 1.0 - 4.0">
-              </div>
-              <div>
-                <label>Cat ref</label>
-                <input name="reference_range_cat" placeholder="e.g. 0.8 - 4.7">
-              </div>
-              <div>
-                <label>Order</label>
-                <input name="display_order" type="number" value="${params.length + 1}">
-              </div>
-              <div>
-                <button type="submit" class="btn btn-pink btn-sm">Add parameter</button>
-              </div>
-            </form>
-          </details>
-        `;
-      }).join('');
+      const panel = getSelectedPanel();
+      if (!panel) {
+        body.innerHTML = '<p class="hint">Select a panel tab above.</p>';
+        return;
+      }
+      body.innerHTML = renderPanelEditor(panel);
     }
 
-    async function savePanel(id, detailsEl) {
+    async function savePanel(id) {
+      const root = document.getElementById('panelEditFields');
       const body = {
-        name: detailsEl.querySelector('[data-panel-field="name"]').value.trim(),
-        description: detailsEl.querySelector('[data-panel-field="description"]').value.trim(),
-        display_order: detailsEl.querySelector('[data-panel-field="display_order"]').value,
+        name: root.querySelector('[data-panel-field="name"]').value.trim(),
+        description: root.querySelector('[data-panel-field="description"]').value.trim(),
+        display_order: root.querySelector('[data-panel-field="display_order"]').value,
       };
-      await LabApp.api(`/api/templates/panels/${id}`, { method: 'PUT', body: (body) });
+      await LabApp.api(`/api/templates/panels/${id}`, { method: 'PUT', body });
       showOk('Panel saved');
-      await loadPanels();
+      await loadPanels(id);
     }
 
     async function togglePanel(id, currentlyActive) {
       await LabApp.api(`/api/templates/panels/${id}`, {
         method: 'PUT',
-        body: ({ is_active: currentlyActive ? 0 : 1 }),
+        body: { is_active: currentlyActive ? 0 : 1 },
       });
       showOk(currentlyActive ? 'Panel deactivated' : 'Panel activated');
-      await loadPanels();
+      await loadPanels(id);
     }
 
     async function saveParam(id, row) {
@@ -263,70 +317,52 @@
         reference_range_cat: row.querySelector('[data-param-field="reference_range_cat"]').value.trim(),
         display_order: row.querySelector('[data-param-field="display_order"]').value,
       };
-      await LabApp.api(`/api/templates/parameters/${id}`, { method: 'PUT', body: (body) });
+      await LabApp.api(`/api/templates/parameters/${id}`, { method: 'PUT', body });
       showOk('Parameter saved');
-      await loadPanels();
+      await loadPanels(selectedId);
     }
 
     async function toggleParam(id, currentlyActive) {
       await LabApp.api(`/api/templates/parameters/${id}`, {
         method: 'PUT',
-        body: ({ is_active: currentlyActive ? 0 : 1 }),
+        body: { is_active: currentlyActive ? 0 : 1 },
       });
       showOk(currentlyActive ? 'Parameter deactivated' : 'Parameter activated');
-      await loadPanels();
+      await loadPanels(selectedId);
     }
 
-    document.getElementById('addPanelForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    document.getElementById('panelTabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-select-panel]');
+      if (!btn) return;
+      const val = btn.getAttribute('data-select-panel');
+      selectedId = val === 'new' ? 'new' : Number(val);
       showAlert('');
-      try {
-        await LabApp.api('/api/templates/panels', {
-          method: 'POST',
-          body: ({
-            code: document.getElementById('newPanelCode').value,
-            name: document.getElementById('newPanelName').value,
-            description: document.getElementById('newPanelDesc').value,
-            display_order: document.getElementById('newPanelOrder').value,
-          }),
-        });
-        e.target.reset();
-        document.getElementById('newPanelOrder').value = '10';
-        showOk('Panel created');
-        await loadPanels();
-      } catch (err) {
-        showAlert(err.message);
-      }
+      renderTabs();
+      renderEditor();
     });
 
-    document.getElementById('panelsList').addEventListener('click', async (e) => {
-      const savePanelBtn = e.target.closest('[data-save-panel]');
-      const togglePanelBtn = e.target.closest('[data-toggle-panel]');
-      const saveParamBtn = e.target.closest('[data-save-param]');
-      const toggleParamBtn = e.target.closest('[data-toggle-param]');
-      try {
+    document.getElementById('editorCard').addEventListener('submit', async (e) => {
+      if (e.target.id === 'addPanelForm') {
+        e.preventDefault();
         showAlert('');
-        if (savePanelBtn) {
-          const id = Number(savePanelBtn.getAttribute('data-save-panel'));
-          await savePanel(id, savePanelBtn.closest('details'));
-        } else if (togglePanelBtn) {
-          const id = Number(togglePanelBtn.getAttribute('data-toggle-panel'));
-          const active = Number(togglePanelBtn.getAttribute('data-active')) === 1;
-          await togglePanel(id, active);
-        } else if (saveParamBtn) {
-          const id = Number(saveParamBtn.getAttribute('data-save-param'));
-          await saveParam(id, saveParamBtn.closest('tr'));
-        } else if (toggleParamBtn) {
-          const id = Number(toggleParamBtn.getAttribute('data-toggle-param'));
-          const active = Number(toggleParamBtn.getAttribute('data-active')) === 1;
-          await toggleParam(id, active);
+        try {
+          const data = await LabApp.api('/api/templates/panels', {
+            method: 'POST',
+            body: {
+              code: document.getElementById('newPanelCode').value,
+              name: document.getElementById('newPanelName').value,
+              description: document.getElementById('newPanelDesc').value,
+              display_order: document.getElementById('newPanelOrder').value,
+            },
+          });
+          showOk('Panel created — now add parameters');
+          await loadPanels(data.panel?.id || 'new');
+        } catch (err) {
+          showAlert(err.message);
         }
-      } catch (err) {
-        showAlert(err.message);
+        return;
       }
-    });
 
-    document.getElementById('panelsList').addEventListener('submit', async (e) => {
       const form = e.target.closest('[data-add-param]');
       if (!form) return;
       e.preventDefault();
@@ -336,17 +372,44 @@
       try {
         await LabApp.api(`/api/templates/panels/${panelId}/parameters`, {
           method: 'POST',
-          body: ({
+          body: {
             code: fd.get('code'),
             name: fd.get('name'),
             unit: fd.get('unit'),
             reference_range_dog: fd.get('reference_range_dog'),
             reference_range_cat: fd.get('reference_range_cat'),
             display_order: fd.get('display_order'),
-          }),
+          },
         });
         showOk('Parameter added');
-        await loadPanels();
+        await loadPanels(panelId);
+      } catch (err) {
+        showAlert(err.message);
+      }
+    });
+
+    document.getElementById('editorCard').addEventListener('click', async (e) => {
+      const savePanelBtn = e.target.closest('[data-save-panel]');
+      const togglePanelBtn = e.target.closest('[data-toggle-panel]');
+      const saveParamBtn = e.target.closest('[data-save-param]');
+      const toggleParamBtn = e.target.closest('[data-toggle-param]');
+      try {
+        showAlert('');
+        if (savePanelBtn) {
+          await savePanel(Number(savePanelBtn.getAttribute('data-save-panel')));
+        } else if (togglePanelBtn) {
+          await togglePanel(
+            Number(togglePanelBtn.getAttribute('data-toggle-panel')),
+            Number(togglePanelBtn.getAttribute('data-active')) === 1
+          );
+        } else if (saveParamBtn) {
+          await saveParam(Number(saveParamBtn.getAttribute('data-save-param')), saveParamBtn.closest('tr'));
+        } else if (toggleParamBtn) {
+          await toggleParam(
+            Number(toggleParamBtn.getAttribute('data-toggle-param')),
+            Number(toggleParamBtn.getAttribute('data-active')) === 1
+          );
+        }
       } catch (err) {
         showAlert(err.message);
       }

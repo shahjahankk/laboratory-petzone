@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=4">
+  <link rel="stylesheet" href="/api/static/styles.css?v=5">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=4"></script>
+  <script src="/api/static/app.js?v=5"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -44,7 +44,9 @@
       const species = report.species === 'Cat' || report.species === 'Dog' ? report.species : (report.species || '');
       const speciesClass = species === 'Cat' ? 'species-cat' : 'species-dog';
 
-      const panelsHtml = (report.panels || []).map((panel) => `
+      const panelsHtml = (report.panels || [])
+        .filter((panel) => (panel.results || []).length > 0)
+        .map((panel) => `
         <section class="report-panel">
           <h2>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h2>
           <table>
@@ -64,7 +66,7 @@
                   <td>${LabApp.escapeHtml(r.unit || '—')}</td>
                   <td>${LabApp.escapeHtml(r.reference_range || '—')}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="4">No results entered</td></tr>'}
+              `).join('')}
             </tbody>
           </table>
         </section>

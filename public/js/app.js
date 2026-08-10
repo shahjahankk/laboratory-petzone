@@ -1,7 +1,7 @@
 const LabApp = {
   tokenKey: 'lab_token',
   draftKey: 'lab_report_draft',
-  version: 4,
+  version: 5,
 
   getToken() {
     return localStorage.getItem(this.tokenKey) || '';
@@ -83,6 +83,8 @@ const LabApp = {
       remarks: '',
       status: 'final',
       panel_ids: [],
+      included_parameter_ids: null,
+      parameter_ids_snapshot: [],
       results: {},
     };
   },
@@ -95,6 +97,12 @@ const LabApp = {
       const draft = { ...this.emptyDraft(), ...parsed };
       draft.panel_ids = (draft.panel_ids || []).map(Number).filter(Boolean);
       draft.species = this.normalizeSpecies(draft.species);
+      if (Array.isArray(draft.included_parameter_ids)) {
+        draft.included_parameter_ids = draft.included_parameter_ids.map(Number).filter(Boolean);
+      } else {
+        draft.included_parameter_ids = null;
+      }
+      draft.parameter_ids_snapshot = (draft.parameter_ids_snapshot || []).map(Number).filter(Boolean);
       if (draft.results && typeof draft.results === 'object') {
         const clean = {};
         Object.keys(draft.results).forEach((k) => {
@@ -115,6 +123,14 @@ const LabApp = {
     if (partial && partial.panel_ids) {
       next.panel_ids = partial.panel_ids.map(Number).filter(Boolean);
     }
+    if (partial && Object.prototype.hasOwnProperty.call(partial, 'included_parameter_ids')) {
+      next.included_parameter_ids = Array.isArray(partial.included_parameter_ids)
+        ? partial.included_parameter_ids.map(Number).filter(Boolean)
+        : null;
+    }
+    if (partial && partial.parameter_ids_snapshot) {
+      next.parameter_ids_snapshot = partial.parameter_ids_snapshot.map(Number).filter(Boolean);
+    }
     if (partial && partial.species != null) {
       next.species = this.normalizeSpecies(partial.species);
     }
@@ -122,6 +138,18 @@ const LabApp = {
     localStorage.setItem(this.draftKey, json);
     try { sessionStorage.setItem(this.draftKey, json); } catch (_) {}
     return next;
+  },
+
+  /** Which parameters are included for print (default: all current panel params). */
+  resolveIncludedParameterIds(allParamIds, draft) {
+    const all = (allParamIds || []).map(Number).filter(Boolean);
+    const d = draft || this.getDraft();
+    if (!Array.isArray(d.included_parameter_ids)) {
+      return all;
+    }
+    const saved = new Set(d.included_parameter_ids.map(Number));
+    const snapshot = new Set((d.parameter_ids_snapshot || []).map(Number));
+    return all.filter((id) => saved.has(id) || !snapshot.has(id));
   },
 
   clearDraft() {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 1 · Patient — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=4">
+  <link rel="stylesheet" href="/api/static/styles.css?v=5">
 </head>
 <body>
   <header class="header">
@@ -118,7 +118,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=4"></script>
+  <script src="/api/static/app.js?v=5"></script>
   <script>
     let lastSearch = null;
 
@@ -358,9 +358,11 @@
           const data = await LabApp.api(`/api/reports/${editId}`);
           const r = data.report;
           const results = {};
+          const included = [];
           (r.panels || []).forEach((panel) => {
             (panel.results || []).forEach((row) => {
               results[row.parameter_id] = row.value || '';
+              included.push(Number(row.parameter_id));
             });
           });
           LabApp.saveDraft({
@@ -378,6 +380,8 @@
             remarks: r.remarks || '',
             status: r.status || 'final',
             panel_ids: (r.panels || []).map((p) => p.id),
+            included_parameter_ids: included,
+            parameter_ids_snapshot: included,
             results,
           });
         } else if (!localStorage.getItem(LabApp.draftKey) && !sessionStorage.getItem(LabApp.draftKey)) {
