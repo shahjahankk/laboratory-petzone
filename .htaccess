@@ -1,0 +1,21 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/petzonep/laboratory-petzone.petzone.pk"
+PassengerBaseURI "/"
+PassengerNodejs "/home/petzonep/nodevenv/laboratory-petzone.petzone.pk/22/bin/node"
+PassengerAppType node
+PassengerStartupFile server.js
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION BEGIN
+<IfModule Litespeed>
+    SetEnv DB_HOST h40.eu.core.hostnext.net
+    SetEnv DB_PORT 3306
+    SetEnv DB_NAME petzonep_laboratory-petzone
+    SetEnv DB_USER petzonep_zubairahmed
+    SetEnv DB_PASSWORD kaimkhankhani@123
+    SetEnv JWT_SECRET petzone-lab-jwt-secret-change-me
+    SetEnv JWT_EXPIRES 7d
+    SetEnv CORS_ORIGIN https://laboratory-petzone.petzone.pk
+    SetEnv NODE_ENV production
+</IfModule>
+# DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION END

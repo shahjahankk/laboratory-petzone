@@ -9,16 +9,23 @@ Simple cPanel-ready lab report software for PetZone — CBC, LFT, RFT, Electroly
 - Select one or more test panels
 - Enter results in a standard table (Parameter / Result / Unit / Reference / Flag)
 - Printable report with PetZone logo
-- MySQL database (import SQL in phpMyAdmin — no setup scripts)
+- MySQL database (phpMyAdmin import — no setup scripts)
 
-## cPanel deploy
+## cPanel + Git deploy
 
-1. Upload this folder to your Node app directory on cPanel
-2. Create a MySQL database + user in cPanel
-3. Import `database/schema.sql` in phpMyAdmin
-4. Copy `.env.example` to `.env` and fill DB credentials
-5. In cPanel Node.js App: set startup file to `server.js`, run npm install, start the app
-6. Open the site → Login → create the first admin account
+Domain / app root: **laboratory-petzone.petzone.pk**
+
+1. cPanel → **Git Version Control** → clone/pull `laboratory-petzone` into the app directory
+2. cPanel → **Setup Node.js App**
+   - Application root: `laboratory-petzone.petzone.pk`
+   - Application URL: `laboratory-petzone.petzone.pk`
+   - Startup file: `server.js` (or `app.js`)
+   - Run **NPM Install** → **Start / Restart**
+3. `.htaccess` is included (Passenger + DB env vars)
+4. Database: `petzonep_laboratory-petzone` (tables already created)
+5. Open the site → `/login` → create first admin
+
+If your Node virtualenv path/version differs, update the `PassengerNodejs` line in `.htaccess`.
 
 ## Local run
 
@@ -34,6 +41,5 @@ App runs on port **4060** by default.
 
 ## Default flow
 
-1. Import schema
-2. Open `/login` and create admin (shown only when users table is empty)
-3. Create report → select CBC / LFT / RFT / Electrolytes → enter values → Print
+1. Open `/login` and create admin (shown only when users table is empty)
+2. Create report → select CBC / LFT / RFT / Electrolytes → enter values → Print
