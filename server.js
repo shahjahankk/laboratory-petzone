@@ -88,7 +88,18 @@ app.use('/api/auth', authRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/patients', patientsRoutes);
-app.use('/api/uploads', require('./routes/uploads'));
+
+try {
+  app.use('/api/uploads', require('./routes/uploads'));
+} catch (err) {
+  console.error('WARNING: uploads route disabled:', err.message);
+  app.use('/api/uploads', (_req, res) => {
+    res.status(503).json({
+      success: false,
+      message: 'Uploads unavailable. Run npm install (multer) and ensure /uploads is writable.',
+    });
+  });
+}
 
 // Serve CSS/JS/img via /api/static — Apache/LiteSpeed often 404s /css /js /img
 // before Passenger; /api/* always reaches Node.
@@ -141,7 +152,25 @@ app.get('/report/:id', (req, res) => {
 app.use('/css', express.static(path.join(publicDir, 'css')));
 app.use('/js', express.static(path.join(publicDir, 'js')));
 app.use('/img', express.static(path.join(publicDir, 'img')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(publicDir));
+
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled route error:', err.message);
+  if (res.headersSent) return;
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Server error',
+  });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+});
 
 app.listen(PORT, () => {
   console.log(`PetZone Laboratory running on port ${PORT}`);

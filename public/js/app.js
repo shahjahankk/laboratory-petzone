@@ -1,7 +1,7 @@
 const LabApp = {
   tokenKey: 'lab_token',
   draftKey: 'lab_report_draft',
-  version: 10,
+  version: 11,
 
   getToken() {
     return localStorage.getItem(this.tokenKey) || '';
@@ -185,7 +185,7 @@ const LabApp = {
     const blank = (v) => this.escapeHtml(v || '_______________');
 
     return `
-      <section class="report-panel skin-form">
+      <section class="skin-form">
         <h2>SKIN SCRAPING</h2>
         <div class="skin-section">
           <h3>Sample / Test Details</h3>

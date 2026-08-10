@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=10">
+  <link rel="stylesheet" href="/api/static/styles.css?v=11">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=10"></script>
+  <script src="/api/static/app.js?v=11"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -83,10 +83,11 @@
         <div class="report-topbar"></div>
         <div class="report-header">
           <div class="brand">
-            <img src="/api/static/img/petzonelogo.png" alt="PetZone" >
+            <img src="/api/static/img/petzonelogo.png" alt="PetZone">
             <div>
               <h1>PetZone Laboratory</h1>
               <div class="sub">Diagnostic Laboratory Report</div>
+              <div class="lab-tagline">PetZone Hospital · Veterinary Diagnostics</div>
             </div>
           </div>
           <div class="report-no-box">
@@ -98,6 +99,7 @@
 
         <div class="species-banner ${speciesClass}">${LabApp.escapeHtml(species || 'Species N/A')}</div>
 
+        <div class="report-section-title">Patient Information</div>
         <div class="meta-card">
           ${metaCell('Owner', report.patient_name)}
           ${metaCell('Phone', report.owner_phone)}
@@ -111,6 +113,7 @@
           ${metaCell('Report Date', formatDate(report.report_date))}
         </div>
 
+        <div class="report-section-title">Investigations &amp; Results</div>
         ${panelsHtml}
         ${report.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(report.forms.SKIN_SCRAPING) : ''}
 
@@ -126,18 +129,18 @@
             </div>
           </section>` : ''}
 
-        ${report.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks:</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>` : ''}
-        ${report.remarks ? `<div class="remarks-box"><strong>Remarks:</strong> ${LabApp.escapeHtml(report.remarks)}</div>` : ''}
+        ${report.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>` : ''}
+        ${report.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.remarks)}</div></div>` : ''}
 
         <div class="report-footer">
-          <div>
+          <div class="footer-note">
             For veterinary diagnostic use only. Correlate with clinical findings.<br>
             Reference ranges shown are for <strong>${LabApp.escapeHtml(species || 'selected species')}</strong>.
             ${report.created_by_name ? `<br>Prepared by: ${LabApp.escapeHtml(report.created_by_name)}` : ''}
           </div>
           <div class="sign-box">
             <div class="sign-line"></div>
-            Authorized Signatory
+            <div class="sign-caption">Authorized Signatory</div>
           </div>
         </div>
       `;

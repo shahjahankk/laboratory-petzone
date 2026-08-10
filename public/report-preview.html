@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4 · Preview — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=10">
+  <link rel="stylesheet" href="/api/static/styles.css?v=11">
 </head>
 <body>
   <header class="header no-print">
@@ -30,10 +30,12 @@
       </div>
     </div>
 
-    <div id="sheet" class="report-sheet report-sheet-pro">Building preview...</div>
+    <div class="preview-frame no-print-bg">
+      <div id="sheet" class="report-sheet report-sheet-pro">Building preview...</div>
+    </div>
   </div>
 
-  <script src="/api/static/app.js?v=10"></script>
+  <script src="/api/static/app.js?v=11"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');

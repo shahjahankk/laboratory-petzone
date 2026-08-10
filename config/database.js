@@ -10,9 +10,11 @@ const dbConfig = {
   database: process.env.DB_NAME || 'petzonep_laboratory',
   waitForConnections: true,
   connectionLimit: parseInt(process.env.DB_POOL_LIMIT || '20', 10),
-  queueLimit: 0,
+  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '50', 10),
   charset: 'utf8mb4',
   timezone: 'Z',
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 };
 
 const pool = mysql.createPool(dbConfig);

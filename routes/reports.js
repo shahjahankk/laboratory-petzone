@@ -187,7 +187,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 router.post('/', authMiddleware, async (req, res) => {
-  const conn = await pool.getConnection();
+  let conn;
   try {
     const {
       patient_name,
@@ -207,7 +207,7 @@ router.post('/', authMiddleware, async (req, res) => {
       results,
       image_ids,
       forms,
-    } = req.body;
+    } = req.body || {};
 
     if (!patient_name || !pet_name) {
       return res.status(400).json({ success: false, message: 'Patient and pet name are required' });
@@ -223,6 +223,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Select at least one test panel' });
     }
 
+    conn = await pool.getConnection();
     await conn.beginTransaction();
     const reportNo = await nextReportNumber(conn);
 
@@ -276,7 +277,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     if (Array.isArray(image_ids)) {
-      const ids = image_ids.map(Number).filter(Boolean);
+      const ids = image_ids.map(Number).filter(Boolean).slice(0, 40);
       for (let i = 0; i < ids.length; i++) {
         await conn.execute(
           'UPDATE lab_report_images SET report_id = ?, display_order = ? WHERE id = ? AND (report_id IS NULL OR report_id = ?)',
@@ -291,17 +292,23 @@ router.post('/', authMiddleware, async (req, res) => {
     const report = await loadReportBundle(reportId);
     res.status(201).json({ success: true, report });
   } catch (err) {
-    await conn.rollback();
-    res.status(500).json({ success: false, message: err.message });
+    if (conn) {
+      try { await conn.rollback(); } catch (_) {}
+    }
+    res.status(500).json({ success: false, message: err.message || 'Save failed' });
   } finally {
-    conn.release();
+    if (conn) conn.release();
   }
 });
 
 router.put('/:id', authMiddleware, async (req, res) => {
-  const conn = await pool.getConnection();
+  let conn;
   try {
     const reportId = Number(req.params.id);
+    if (!reportId) {
+      return res.status(400).json({ success: false, message: 'Invalid report id' });
+    }
+
     const existing = await executeQuery('SELECT id FROM lab_reports WHERE id = ? LIMIT 1', [reportId]);
     if (!existing.length) {
       return res.status(404).json({ success: false, message: 'Report not found' });
@@ -325,13 +332,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
       results,
       image_ids,
       forms,
-    } = req.body;
+    } = req.body || {};
 
     const speciesNorm = normalizeSpecies(species);
     if (speciesNorm !== 'Dog' && speciesNorm !== 'Cat') {
       return res.status(400).json({ success: false, message: 'Select species: Dog or Cat' });
     }
 
+    conn = await pool.getConnection();
     await conn.beginTransaction();
 
     await conn.execute(
@@ -360,7 +368,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (Array.isArray(panel_ids)) {
       await conn.execute('DELETE FROM lab_report_panels WHERE report_id = ?', [reportId]);
-      for (const panelId of panel_ids.map(Number).filter(Boolean)) {
+      for (const panelId of panel_ids.map(Number).filter(Boolean).slice(0, 50)) {
         await conn.execute(
           'INSERT INTO lab_report_panels (report_id, panel_id) VALUES (?, ?)',
           [reportId, panelId]
@@ -370,7 +378,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (Array.isArray(results)) {
       await conn.execute('DELETE FROM lab_report_results WHERE report_id = ?', [reportId]);
-      for (const row of results) {
+      for (const row of results.slice(0, 500)) {
         if (!row.parameter_id) continue;
         await conn.execute(
           `INSERT INTO lab_report_results (report_id, parameter_id, value, flag, remarks)
@@ -387,7 +395,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     if (Array.isArray(image_ids)) {
-      const ids = image_ids.map(Number).filter(Boolean);
+      const ids = image_ids.map(Number).filter(Boolean).slice(0, 40);
       await conn.execute(
         'UPDATE lab_report_images SET report_id = NULL WHERE report_id = ?',
         [reportId]
@@ -409,10 +417,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const report = await loadReportBundle(reportId);
     res.json({ success: true, report });
   } catch (err) {
-    await conn.rollback();
-    res.status(500).json({ success: false, message: err.message });
+    if (conn) {
+      try { await conn.rollback(); } catch (_) {}
+    }
+    res.status(500).json({ success: false, message: err.message || 'Update failed' });
   } finally {
-    conn.release();
+    if (conn) conn.release();
   }
 });
 

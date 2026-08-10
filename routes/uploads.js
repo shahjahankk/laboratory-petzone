@@ -2,18 +2,30 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
 const { executeQuery } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (err) {
+  console.error('WARNING: cannot create uploads folder:', err.message);
 }
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  destination: (_req, _file, cb) => {
+    try {
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+      cb(null, uploadsDir);
+    } catch (e) {
+      cb(e);
+    }
+  },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname || '').toLowerCase().slice(0, 10);
     const safeExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext) ? ext : '.jpg';
@@ -23,11 +35,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 8 * 1024 * 1024 },
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, cb) => {
     const ok = /^image\/(jpeg|jpg|png|gif|webp)$/i.test(file.mimetype || '');
     cb(ok ? null : new Error('Only image files are allowed (JPG, PNG, GIF, WEBP)'), ok);
   },
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many uploads, please wait' },
 });
 
 // Public so <img> and print work without Bearer header
@@ -56,7 +74,13 @@ router.get('/file/:name', async (req, res) => {
   }
 });
 
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', authMiddleware, uploadLimiter, (req, res) => {
+  if (!fs.existsSync(uploadsDir)) {
+    return res.status(500).json({
+      success: false,
+      message: 'Uploads folder missing or not writable on server. Create /uploads and restart.',
+    });
+  }
   upload.single('image')(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ success: false, message: err.message || 'Upload failed' });
