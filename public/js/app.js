@@ -88,9 +88,22 @@ const LabApp = {
 
   getDraft() {
     try {
-      const raw = sessionStorage.getItem(this.draftKey);
+      const raw = localStorage.getItem(this.draftKey) || sessionStorage.getItem(this.draftKey);
       if (!raw) return this.emptyDraft();
-      return { ...this.emptyDraft(), ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      const draft = { ...this.emptyDraft(), ...parsed };
+      draft.panel_ids = (draft.panel_ids || []).map(Number).filter(Boolean);
+      draft.species = this.normalizeSpecies(draft.species);
+      if (draft.results && typeof draft.results === 'object') {
+        const clean = {};
+        Object.keys(draft.results).forEach((k) => {
+          clean[String(k)] = draft.results[k];
+        });
+        draft.results = clean;
+      } else {
+        draft.results = {};
+      }
+      return draft;
     } catch (_) {
       return this.emptyDraft();
     }
@@ -98,12 +111,21 @@ const LabApp = {
 
   saveDraft(partial) {
     const next = { ...this.getDraft(), ...partial };
-    sessionStorage.setItem(this.draftKey, JSON.stringify(next));
+    if (partial && partial.panel_ids) {
+      next.panel_ids = partial.panel_ids.map(Number).filter(Boolean);
+    }
+    if (partial && partial.species != null) {
+      next.species = this.normalizeSpecies(partial.species);
+    }
+    const json = JSON.stringify(next);
+    localStorage.setItem(this.draftKey, json);
+    try { sessionStorage.setItem(this.draftKey, json); } catch (_) {}
     return next;
   },
 
   clearDraft() {
-    sessionStorage.removeItem(this.draftKey);
+    localStorage.removeItem(this.draftKey);
+    try { sessionStorage.removeItem(this.draftKey); } catch (_) {}
   },
 
   normalizeSpecies(value) {
@@ -113,12 +135,22 @@ const LabApp = {
     return value || '';
   },
 
+  hasPatient(draft) {
+    const d = draft || this.getDraft();
+    return !!(d.patient_name && d.pet_name && (d.species === 'Dog' || d.species === 'Cat'));
+  },
+
+  hasTests(draft) {
+    const d = draft || this.getDraft();
+    return Array.isArray(d.panel_ids) && d.panel_ids.length > 0;
+  },
+
   renderStepper(activeStep) {
     const steps = [
-      { n: 1, label: 'Patient', href: '/report/new' },
-      { n: 2, label: 'Tests', href: '/report/new/tests' },
-      { n: 3, label: 'Results', href: '/report/new/results' },
-      { n: 4, label: 'Preview', href: '/report/new/preview' },
+      { n: 1, label: 'Patient' },
+      { n: 2, label: 'Tests' },
+      { n: 3, label: 'Results' },
+      { n: 4, label: 'Preview' },
     ];
     return `
       <div class="wizard-steps">
@@ -133,12 +165,12 @@ const LabApp = {
 
   guardStep(minFields) {
     const draft = this.getDraft();
-    if (minFields.includes('patient') && (!draft.patient_name || !draft.pet_name || !draft.species)) {
-      window.location.href = '/report/new';
+    if (minFields.includes('patient') && !this.hasPatient(draft)) {
+      window.location.replace('/report/new');
       return null;
     }
-    if (minFields.includes('tests') && !(draft.panel_ids || []).length) {
-      window.location.href = '/report/new/tests';
+    if (minFields.includes('tests') && !this.hasTests(draft)) {
+      window.location.replace('/report/new/tests');
       return null;
     }
     return draft;

@@ -31,28 +31,28 @@
       <div id="patientResults" class="patient-list" style="margin-top:12px;"></div>
     </div>
 
-    <form id="patientForm" class="card">
+    <div class="card" id="patientForm">
       <h3 class="section-title">Patient Details</h3>
       <div class="grid-3">
         <div class="form-group">
           <label>Owner / Patient Name *</label>
-          <input name="patient_name" required>
+          <input id="patient_name" name="patient_name" autocomplete="name">
         </div>
         <div class="form-group">
           <label>Phone</label>
-          <input name="owner_phone">
+          <input id="owner_phone" name="owner_phone" autocomplete="tel">
         </div>
         <div class="form-group">
           <label>Referring Vet</label>
-          <input name="referring_vet">
+          <input id="referring_vet" name="referring_vet">
         </div>
         <div class="form-group">
           <label>Pet Name *</label>
-          <input name="pet_name" required>
+          <input id="pet_name" name="pet_name">
         </div>
         <div class="form-group">
           <label>Species *</label>
-          <select name="species" required>
+          <select id="species" name="species">
             <option value="">Select Dog or Cat</option>
             <option value="Dog">Dog</option>
             <option value="Cat">Cat</option>
@@ -60,15 +60,15 @@
         </div>
         <div class="form-group">
           <label>Breed</label>
-          <input name="breed">
+          <input id="breed" name="breed">
         </div>
         <div class="form-group">
           <label>Age</label>
-          <input name="age" placeholder="e.g. 3 years">
+          <input id="age" name="age" placeholder="e.g. 3 years">
         </div>
         <div class="form-group">
           <label>Sex</label>
-          <select name="sex">
+          <select id="sex" name="sex">
             <option value="">Select</option>
             <option>Male</option>
             <option>Female</option>
@@ -78,15 +78,15 @@
         </div>
         <div class="form-group">
           <label>Sample Date</label>
-          <input type="date" name="sample_date">
+          <input type="date" id="sample_date" name="sample_date">
         </div>
         <div class="form-group">
           <label>Report Date</label>
-          <input type="date" name="report_date">
+          <input type="date" id="report_date" name="report_date">
         </div>
         <div class="form-group">
           <label>Status</label>
-          <select name="status">
+          <select id="status" name="status">
             <option value="final">Final</option>
             <option value="draft">Draft</option>
           </select>
@@ -94,14 +94,14 @@
       </div>
       <div class="form-group">
         <label>Remarks</label>
-        <textarea name="remarks" rows="2"></textarea>
+        <textarea id="remarks" name="remarks" rows="2"></textarea>
       </div>
 
       <div class="wizard-nav">
         <a href="/dashboard" class="btn btn-outline">Cancel</a>
-        <button type="submit" class="btn btn-primary">Next: Select Tests →</button>
+        <button type="button" class="btn btn-primary" id="nextBtn">Next: Select Tests →</button>
       </div>
-    </form>
+    </div>
   </div>
 
   <script src="/js/app.js"></script>
@@ -110,15 +110,66 @@
       const el = document.getElementById('alert');
       el.style.display = msg ? 'block' : 'none';
       el.textContent = msg || '';
+      if (msg) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function val(id) {
+      const el = document.getElementById(id);
+      return el ? String(el.value || '').trim() : '';
+    }
+
+    function setVal(id, value) {
+      const el = document.getElementById(id);
+      if (el && value != null) el.value = value;
     }
 
     function fillForm(data) {
-      const form = document.getElementById('patientForm');
-      Object.keys(data).forEach((k) => {
-        if (form.elements[k] != null && data[k] != null) {
-          form.elements[k].value = data[k];
-        }
+      [
+        'patient_name', 'owner_phone', 'referring_vet', 'pet_name', 'species',
+        'breed', 'age', 'sex', 'sample_date', 'report_date', 'status', 'remarks'
+      ].forEach((k) => {
+        if (data[k] != null) setVal(k, data[k]);
       });
+    }
+
+    function goNext() {
+      showAlert('');
+      const species = LabApp.normalizeSpecies(val('species'));
+      const patient_name = val('patient_name');
+      const pet_name = val('pet_name');
+
+      if (!patient_name || !pet_name) {
+        showAlert('Owner name and pet name are required');
+        return;
+      }
+      if (species !== 'Dog' && species !== 'Cat') {
+        showAlert('Please select Dog or Cat');
+        return;
+      }
+
+      LabApp.saveDraft({
+        patient_name,
+        owner_phone: val('owner_phone'),
+        pet_name,
+        species,
+        breed: val('breed'),
+        age: val('age'),
+        sex: val('sex'),
+        referring_vet: val('referring_vet'),
+        sample_date: val('sample_date') || LabApp.today(),
+        report_date: val('report_date') || LabApp.today(),
+        remarks: val('remarks'),
+        status: val('status') || 'final',
+      });
+
+      // Verify draft saved before leaving
+      const check = LabApp.getDraft();
+      if (!check.patient_name || !check.pet_name || !check.species) {
+        showAlert('Could not save patient details. Please try again.');
+        return;
+      }
+
+      window.location.assign('/report/new/tests');
     }
 
     async function searchPatients(q = '') {
@@ -152,6 +203,7 @@
             });
             box.querySelectorAll('.patient-item').forEach((b) => b.classList.remove('selected'));
             btn.classList.add('selected');
+            showAlert('');
           };
         });
       } catch (err) {
@@ -159,102 +211,91 @@
       }
     }
 
+    // Bind Next immediately — do not wait for async load
+    document.getElementById('nextBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goNext();
+    });
+
     (async () => {
-      const user = await LabApp.requireAuth();
-      if (!user) return;
-      document.getElementById('logoutBtn').onclick = () => LabApp.logout();
-      document.getElementById('stepper').innerHTML = LabApp.renderStepper(1);
+      try {
+        const user = await LabApp.requireAuth();
+        if (!user) return;
 
-      const params = new URLSearchParams(location.search);
-      const editId = params.get('edit');
-      const patientQ = params.get('patient');
-      const fresh = params.get('fresh') === '1';
+        document.getElementById('logoutBtn').onclick = () => LabApp.logout();
+        if (LabApp.renderStepper) {
+          document.getElementById('stepper').innerHTML = LabApp.renderStepper(1);
+        }
 
-      if (fresh && !editId) {
-        LabApp.clearDraft();
-        LabApp.saveDraft(LabApp.emptyDraft());
-      }
+        const params = new URLSearchParams(location.search);
+        const editId = params.get('edit');
+        const patientQ = params.get('patient');
+        const fresh = params.get('fresh') === '1';
 
-      if (editId) {
-        const data = await LabApp.api(`/api/reports/${editId}`);
-        const r = data.report;
-        const results = {};
-        (r.panels || []).forEach((panel) => {
-          (panel.results || []).forEach((row) => {
-            results[row.parameter_id] = row.value || '';
+        if (fresh && !editId) {
+          LabApp.clearDraft();
+          LabApp.saveDraft(LabApp.emptyDraft());
+        }
+
+        if (editId) {
+          const data = await LabApp.api(`/api/reports/${editId}`);
+          const r = data.report;
+          const results = {};
+          (r.panels || []).forEach((panel) => {
+            (panel.results || []).forEach((row) => {
+              results[row.parameter_id] = row.value || '';
+            });
           });
-        });
-        LabApp.saveDraft({
-          editId: r.id,
-          patient_name: r.patient_name || '',
-          owner_phone: r.owner_phone || '',
-          pet_name: r.pet_name || '',
-          species: LabApp.normalizeSpecies(r.species),
-          breed: r.breed || '',
-          age: r.age || '',
-          sex: r.sex || '',
-          referring_vet: r.referring_vet || '',
-          sample_date: String(r.sample_date || LabApp.today()).slice(0, 10),
-          report_date: String(r.report_date || LabApp.today()).slice(0, 10),
-          remarks: r.remarks || '',
-          status: r.status || 'final',
-          panel_ids: (r.panels || []).map((p) => p.id),
-          results,
-        });
-      } else if (!sessionStorage.getItem(LabApp.draftKey)) {
+          LabApp.saveDraft({
+            editId: r.id,
+            patient_name: r.patient_name || '',
+            owner_phone: r.owner_phone || '',
+            pet_name: r.pet_name || '',
+            species: LabApp.normalizeSpecies(r.species),
+            breed: r.breed || '',
+            age: r.age || '',
+            sex: r.sex || '',
+            referring_vet: r.referring_vet || '',
+            sample_date: String(r.sample_date || LabApp.today()).slice(0, 10),
+            report_date: String(r.report_date || LabApp.today()).slice(0, 10),
+            remarks: r.remarks || '',
+            status: r.status || 'final',
+            panel_ids: (r.panels || []).map((p) => p.id),
+            results,
+          });
+      } else if (!localStorage.getItem(LabApp.draftKey) && !sessionStorage.getItem(LabApp.draftKey)) {
         LabApp.saveDraft(LabApp.emptyDraft());
       }
 
-      fillForm(LabApp.getDraft());
-
-      if (patientQ) {
-        document.getElementById('patientSearch').value = patientQ;
-        await searchPatients(patientQ);
-      } else {
-        await searchPatients('');
-      }
-
-      document.getElementById('patientSearchBtn').onclick = () =>
-        searchPatients(document.getElementById('patientSearch').value.trim());
-      document.getElementById('patientSearch').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          searchPatients(e.target.value.trim());
-        }
-      });
-      document.getElementById('clearPatientBtn').onclick = () => {
-        LabApp.saveDraft({
-          ...LabApp.emptyDraft(),
-          editId: LabApp.getDraft().editId,
-        });
         fillForm(LabApp.getDraft());
-        searchPatients('');
-      };
 
-      document.getElementById('patientForm').onsubmit = (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        const species = LabApp.normalizeSpecies(fd.get('species'));
-        if (!fd.get('patient_name') || !fd.get('pet_name') || (species !== 'Dog' && species !== 'Cat')) {
-          showAlert('Owner, pet name, and Dog/Cat are required');
-          return;
-        }
-        LabApp.saveDraft({
-          patient_name: String(fd.get('patient_name')).trim(),
-          owner_phone: String(fd.get('owner_phone') || '').trim(),
-          pet_name: String(fd.get('pet_name')).trim(),
-          species,
-          breed: String(fd.get('breed') || '').trim(),
-          age: String(fd.get('age') || '').trim(),
-          sex: String(fd.get('sex') || ''),
-          referring_vet: String(fd.get('referring_vet') || '').trim(),
-          sample_date: fd.get('sample_date') || LabApp.today(),
-          report_date: fd.get('report_date') || LabApp.today(),
-          remarks: String(fd.get('remarks') || ''),
-          status: fd.get('status') || 'final',
+        document.getElementById('patientSearchBtn').onclick = () =>
+          searchPatients(document.getElementById('patientSearch').value.trim());
+        document.getElementById('patientSearch').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            searchPatients(e.target.value.trim());
+          }
         });
-        window.location.href = '/report/new/tests';
-      };
+        document.getElementById('clearPatientBtn').onclick = () => {
+          LabApp.saveDraft({
+            ...LabApp.emptyDraft(),
+            editId: LabApp.getDraft().editId,
+          });
+          fillForm(LabApp.getDraft());
+          searchPatients('');
+        };
+
+        if (patientQ) {
+          document.getElementById('patientSearch').value = patientQ;
+          await searchPatients(patientQ);
+        } else {
+          await searchPatients('');
+        }
+      } catch (err) {
+        showAlert(err.message || 'Page failed to load');
+      }
     })();
   </script>
 </body>

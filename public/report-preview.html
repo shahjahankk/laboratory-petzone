@@ -35,6 +35,12 @@
 
   <script src="/js/app.js"></script>
   <script>
+    function showAlert(msg) {
+      const el = document.getElementById('alert');
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg || '';
+    }
+
     function formatDate(v) {
       return v ? String(v).slice(0, 10) : '—';
     }
@@ -51,7 +57,8 @@
     function renderPreview(draft, panels) {
       const species = draft.species;
       const speciesClass = species === 'Cat' ? 'species-cat' : 'species-dog';
-      const selected = panels.filter((p) => (draft.panel_ids || []).includes(p.id));
+      const idSet = new Set((draft.panel_ids || []).map(Number));
+      const selected = panels.filter((p) => idSet.has(Number(p.id)));
       const values = draft.results || {};
 
       const panelsHtml = selected.map((panel) => `
@@ -67,10 +74,10 @@
               </tr>
             </thead>
             <tbody>
-              ${panel.parameters.map((param) => `
+              ${(panel.parameters || []).map((param) => `
                 <tr>
                   <td>${LabApp.escapeHtml(param.name)}</td>
-                  <td class="result-val">${LabApp.escapeHtml(values[param.id] || '—')}</td>
+                  <td class="result-val">${LabApp.escapeHtml(values[param.id] || values[String(param.id)] || '—')}</td>
                   <td>${LabApp.escapeHtml(param.unit || '—')}</td>
                   <td>${LabApp.escapeHtml(refFor(param, species))}</td>
                 </tr>
@@ -78,7 +85,7 @@
             </tbody>
           </table>
         </section>
-      `).join('');
+      `).join('') || '<p class="hint">No tests in this draft.</p>';
 
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>
@@ -133,7 +140,7 @@
         clinical_notes: '',
         remarks: draft.remarks,
         status: draft.status || 'final',
-        panel_ids: draft.panel_ids || [],
+        panel_ids: (draft.panel_ids || []).map(Number),
         results: Object.keys(draft.results || {}).map((parameter_id) => ({
           parameter_id: Number(parameter_id),
           value: draft.results[parameter_id],
@@ -145,35 +152,55 @@
 
     async function saveReport(andPrint) {
       const draft = LabApp.getDraft();
-      const alert = document.getElementById('alert');
-      alert.style.display = 'none';
-      const payload = buildPayload(draft);
+      showAlert('');
+      if (!LabApp.hasPatient(draft) || !LabApp.hasTests(draft)) {
+        showAlert('Draft incomplete. Go back and finish Patient + Tests.');
+        return;
+      }
+
+      const saveOnlyBtn = document.getElementById('saveOnlyBtn');
+      const savePrintBtn = document.getElementById('savePrintBtn');
+      saveOnlyBtn.disabled = true;
+      savePrintBtn.disabled = true;
+
       try {
+        const payload = buildPayload(draft);
         const data = draft.editId
           ? await LabApp.api(`/api/reports/${draft.editId}`, { method: 'PUT', body: payload })
           : await LabApp.api('/api/reports', { method: 'POST', body: payload });
         LabApp.clearDraft();
-        window.location.href = `/report/${data.report.id}${andPrint ? '?print=1' : ''}`;
+        window.location.assign(`/report/${data.report.id}${andPrint ? '?print=1' : ''}`);
       } catch (err) {
-        alert.style.display = 'block';
-        alert.textContent = err.message || 'Save failed';
+        showAlert(err.message || 'Save failed');
+        saveOnlyBtn.disabled = false;
+        savePrintBtn.disabled = false;
       }
     }
 
+    document.getElementById('saveOnlyBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      saveReport(false);
+    });
+    document.getElementById('savePrintBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      saveReport(true);
+    });
+
     (async () => {
-      const user = await LabApp.requireAuth();
-      if (!user) return;
-      const draft = LabApp.guardStep(['patient', 'tests']);
-      if (!draft) return;
+      try {
+        const user = await LabApp.requireAuth();
+        if (!user) return;
+        const draft = LabApp.guardStep(['patient', 'tests']);
+        if (!draft) return;
 
-      document.getElementById('logoutBtn').onclick = () => LabApp.logout();
-      document.getElementById('stepper').innerHTML = LabApp.renderStepper(4);
+        document.getElementById('logoutBtn').onclick = () => LabApp.logout();
+        document.getElementById('stepper').innerHTML = LabApp.renderStepper(4);
 
-      const tpl = await LabApp.api('/api/templates');
-      renderPreview(draft, tpl.panels || []);
-
-      document.getElementById('saveOnlyBtn').onclick = () => saveReport(false);
-      document.getElementById('savePrintBtn').onclick = () => saveReport(true);
+        const tpl = await LabApp.api('/api/templates');
+        renderPreview(draft, tpl.panels || []);
+      } catch (err) {
+        showAlert(err.message || 'Failed to load preview');
+      }
     })();
   </script>
 </body>

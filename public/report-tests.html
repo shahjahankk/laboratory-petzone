@@ -23,58 +23,84 @@
 
     <div class="card" style="margin-bottom:16px;">
       <div id="patientSummary" class="hint" style="margin-bottom:12px;"></div>
-      <div class="grid-3" id="panelChecks"></div>
+      <div class="grid-3" id="panelChecks"><p class="hint">Loading tests...</p></div>
     </div>
 
     <div class="wizard-nav">
-      <a href="/report/new" class="btn btn-outline">← Back: Patient</a>
+      <a href="/report/new" class="btn btn-outline" id="backBtn">← Back: Patient</a>
       <button type="button" class="btn btn-primary" id="nextBtn">Next: Enter Results →</button>
     </div>
   </div>
 
   <script src="/js/app.js"></script>
   <script>
+    function showAlert(msg) {
+      const el = document.getElementById('alert');
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg || '';
+    }
+
+    function goNext() {
+      showAlert('');
+      const ids = [...document.querySelectorAll('#panelChecks input:checked')].map((el) => Number(el.value)).filter(Boolean);
+      if (!ids.length) {
+        showAlert('Select at least one test');
+        return;
+      }
+      LabApp.saveDraft({ panel_ids: ids });
+      const check = LabApp.getDraft();
+      if (!check.panel_ids.length) {
+        showAlert('Could not save test selection. Try again.');
+        return;
+      }
+      window.location.assign('/report/new/results');
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      goNext();
+    });
+
     (async () => {
-      const user = await LabApp.requireAuth();
-      if (!user) return;
-      const draft = LabApp.guardStep(['patient']);
-      if (!draft) return;
+      try {
+        const user = await LabApp.requireAuth();
+        if (!user) return;
+        const draft = LabApp.guardStep(['patient']);
+        if (!draft) return;
 
-      document.getElementById('logoutBtn').onclick = () => LabApp.logout();
-      document.getElementById('stepper').innerHTML = LabApp.renderStepper(2);
-      document.getElementById('patientSummary').innerHTML =
-        `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> · ${LabApp.escapeHtml(draft.species)} · ${LabApp.escapeHtml(draft.patient_name)}`;
+        document.getElementById('logoutBtn').onclick = () => LabApp.logout();
+        document.getElementById('stepper').innerHTML = LabApp.renderStepper(2);
+        document.getElementById('patientSummary').innerHTML =
+          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> · ${LabApp.escapeHtml(draft.species)} · ${LabApp.escapeHtml(draft.patient_name)}`;
 
-      const tpl = await LabApp.api('/api/templates');
-      const panels = tpl.panels || [];
-      const selected = new Set((draft.panel_ids || []).map(Number));
+        const tpl = await LabApp.api('/api/templates');
+        const panels = tpl.panels || [];
+        const selected = new Set((draft.panel_ids || []).map(Number));
 
-      const box = document.getElementById('panelChecks');
-      box.innerHTML = panels.map((p) => `
-        <label class="panel-check ${selected.has(p.id) ? 'active' : ''}">
-          <input type="checkbox" value="${p.id}" ${selected.has(p.id) ? 'checked' : ''}>
-          <span>
-            <strong>${LabApp.escapeHtml(p.code)}</strong><br>
-            <small style="color:var(--gray-500)">${LabApp.escapeHtml(p.name)}</small>
-          </span>
-        </label>
-      `).join('');
-
-      box.querySelectorAll('input').forEach((input) => {
-        input.onchange = () => input.closest('.panel-check').classList.toggle('active', input.checked);
-      });
-
-      document.getElementById('nextBtn').onclick = () => {
-        const ids = [...box.querySelectorAll('input:checked')].map((el) => Number(el.value));
-        if (!ids.length) {
-          const alert = document.getElementById('alert');
-          alert.style.display = 'block';
-          alert.textContent = 'Select at least one test';
+        const box = document.getElementById('panelChecks');
+        if (!panels.length) {
+          box.innerHTML = '<p class="hint">No test panels found in database.</p>';
           return;
         }
-        LabApp.saveDraft({ panel_ids: ids });
-        window.location.href = '/report/new/results';
-      };
+
+        box.innerHTML = panels.map((p) => `
+          <label class="panel-check ${selected.has(Number(p.id)) ? 'active' : ''}">
+            <input type="checkbox" value="${p.id}" ${selected.has(Number(p.id)) ? 'checked' : ''}>
+            <span>
+              <strong>${LabApp.escapeHtml(p.code)}</strong><br>
+              <small style="color:var(--gray-500)">${LabApp.escapeHtml(p.name)}</small>
+            </span>
+          </label>
+        `).join('');
+
+        box.querySelectorAll('input').forEach((input) => {
+          input.addEventListener('change', () => {
+            input.closest('.panel-check').classList.toggle('active', input.checked);
+          });
+        });
+      } catch (err) {
+        showAlert(err.message || 'Failed to load tests');
+      }
     })();
   </script>
 </body>
