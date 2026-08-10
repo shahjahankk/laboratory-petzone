@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report â€” PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=17">
+  <link rel="stylesheet" href="/api/static/styles.css?v=19">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=17"></script>
+  <script src="/api/static/app.js?v=19"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -90,18 +90,23 @@
         ? 'Ultrasound'
         : 'Investigations &amp; Results';
 
+      const dt = LabApp.formatReportDateParts(report.report_date, report.created_at);
+
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>
         <div class="report-header">
-          <div class="brand">
+          <div class="rh-left">
             <img src="/api/static/img/petzonelogo.png" alt="PetZone">
-            <div>
-              <h1>PetZone Laboratory</h1>
-              <div class="sub">Diagnostic Laboratory Report</div>
-              <div class="lab-tagline">PetZone Hospital Â· Veterinary Diagnostics</div>
-              <div class="report-datetime"><span class="dt-label">Date &amp; Time</span>${LabApp.escapeHtml(LabApp.formatReportDateTime(report.report_date, report.created_at))}</div>
-              <div class="report-meta-line">${LabApp.escapeHtml(report.report_no)}</div>
-            </div>
+          </div>
+          <div class="rh-center">
+            <h1>PetZone Laboratory</h1>
+            <div class="sub">Diagnostic Laboratory Report</div>
+          </div>
+          <div class="rh-right">
+            <div class="dt-label">Date &amp; Time</div>
+            <div class="dt-date">${LabApp.escapeHtml(dt.date)}</div>
+            <div class="dt-time">${LabApp.escapeHtml(dt.time)}</div>
+            <div class="report-meta-line">${LabApp.escapeHtml(report.report_no)}</div>
           </div>
         </div>
 

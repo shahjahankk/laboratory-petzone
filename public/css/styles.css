@@ -305,33 +305,37 @@ table.data tr:hover td { background: #FFF8FA; }
 }
 
 .report-header {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 8px;
+  gap: 12px;
   border-bottom: 2.5px solid var(--report-line);
-  padding-bottom: 16px;
+  padding-bottom: 14px;
   margin-bottom: 14px;
 }
-.report-header .brand {
+.report-header .rh-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
+  justify-content: flex-start;
+}
+.report-header .rh-left img {
+  height: 68px;
+  width: auto;
+  display: block;
+}
+.report-header .rh-center {
+  text-align: center;
   min-width: 0;
 }
-.report-header img { height: 72px; width: auto; }
-.report-header h1 {
+.report-header .rh-center h1 {
   color: var(--report-accent);
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin: 0;
   text-align: center;
 }
-.report-header .sub {
+.report-header .rh-center .sub {
   color: var(--report-muted);
   font-size: 11px;
   margin-top: 5px;
@@ -340,39 +344,43 @@ table.data tr:hover td { background: #FFF8FA; }
   font-weight: 700;
   text-align: center;
 }
-.report-header .lab-tagline {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--report-muted);
-  text-align: center;
+.report-header .rh-right {
+  text-align: right;
+  justify-self: end;
+  min-width: 120px;
 }
-.report-header .report-datetime {
-  margin-top: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--report-ink);
-  letter-spacing: 0.02em;
-  text-align: center;
-}
-.report-header .report-datetime .dt-label {
-  font-size: 10px;
+.report-header .rh-right .dt-label {
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--report-muted);
-  margin-right: 6px;
+  margin-bottom: 2px;
 }
-.report-header .report-meta-line {
-  margin-top: 4px;
+.report-header .rh-right .dt-date {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--report-ink);
+  line-height: 1.25;
+}
+.report-header .rh-right .dt-time {
   font-size: 12px;
+  font-weight: 700;
+  color: var(--report-accent);
+  line-height: 1.25;
+  margin-top: 1px;
+}
+.report-header .rh-right .report-meta-line {
+  margin-top: 4px;
+  font-size: 11px;
   color: var(--report-muted);
   font-weight: 600;
-  text-align: center;
 }
 
-.report-no-box {
-  display: none;
-}
+/* legacy selectors kept harmless */
+.report-header .brand { display: none; }
+.report-header .lab-tagline { display: none; }
+.report-no-box { display: none; }
 .report-no-box .rn-label {
   font-size: 10px;
   text-transform: uppercase;
@@ -580,7 +588,7 @@ table.data tr:hover td { background: #FFF8FA; }
   gap: 0;
 }
 .remarks-handwrite .line {
-  height: 22px;
+  height: 24px;
   border-bottom: 1px solid #94a3b8;
 }
 .remarks-handwrite .line:last-child {
@@ -747,29 +755,26 @@ table.data tr:hover td { background: #FFF8FA; }
     padding: 0 !important;
   }
 
-  /* Compact header — keep logo + title side-by-side like preview */
+  /* Compact header — logo | title | date */
   .report-topbar { margin: 0 0 6px !important; height: 4px !important; }
   .report-header {
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: 1fr 2fr 1fr !important;
     align-items: center !important;
-    gap: 2px !important;
+    gap: 8px !important;
     padding-bottom: 6px !important;
     margin-bottom: 6px !important;
   }
-  .report-header .brand {
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 10px !important;
-    text-align: left !important;
-  }
-  .report-header img { height: 44px !important; }
-  .report-header h1 { font-size: 18px !important; text-align: left !important; }
-  .report-header .sub { font-size: 9px !important; margin-top: 2px !important; text-align: left !important; }
-  .report-header .lab-tagline { font-size: 9px !important; margin-top: 2px !important; text-align: left !important; }
-  .report-header .report-datetime { margin-top: 4px !important; font-size: 11px !important; text-align: center !important; }
-  .report-header .report-datetime .dt-label { font-size: 8px !important; }
-  .report-header .report-meta-line { font-size: 10px !important; margin-top: 1px !important; text-align: center !important; }
+  .report-header .rh-left { justify-content: flex-start !important; }
+  .report-header .rh-left img { height: 42px !important; }
+  .report-header .rh-center { text-align: center !important; }
+  .report-header .rh-center h1 { font-size: 16px !important; text-align: center !important; }
+  .report-header .rh-center .sub { font-size: 8px !important; margin-top: 2px !important; text-align: center !important; }
+  .report-header .rh-right { text-align: right !important; justify-self: end !important; }
+  .report-header .rh-right .dt-label { font-size: 7px !important; margin-bottom: 1px !important; }
+  .report-header .rh-right .dt-date { font-size: 11px !important; }
+  .report-header .rh-right .dt-time { font-size: 10px !important; }
+  .report-header .rh-right .report-meta-line { font-size: 9px !important; margin-top: 2px !important; }
 
   /* Patient info — always 2-column box like screen preview */
   .report-section-title {
@@ -823,7 +828,7 @@ table.data tr:hover td { background: #FFF8FA; }
     font-size: 9px !important;
     margin-bottom: 4px !important;
   }
-  .remarks-handwrite .line { height: 18px !important; }
+  .remarks-handwrite .line { height: 20px !important; }
   .remarks-box {
     padding: 6px 8px !important;
     margin-bottom: 6px !important;
@@ -894,8 +899,16 @@ table.data tr:hover td { background: #FFF8FA; }
 @media screen and (max-width: 768px) {
   .report-sheet, .report-sheet-pro { padding: 18px 14px; }
   .report-topbar { margin: -18px -14px 16px; }
-  .report-header { flex-direction: column; }
-  .report-header .brand { flex-direction: column; text-align: center; }
+  .report-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 8px;
+  }
+  .report-header .rh-left { justify-content: center; }
+  .report-header .rh-right {
+    text-align: center;
+    justify-self: center;
+  }
   .report-panel h2.panel-head-split { flex-direction: column; align-items: flex-start; }
   .report-panel h2 .panel-head-right { text-align: left; }
   .meta-card { grid-template-columns: 1fr; }

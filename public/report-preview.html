@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4 Â· Preview â€” PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=17">
+  <link rel="stylesheet" href="/api/static/styles.css?v=19">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=17"></script>
+  <script src="/api/static/app.js?v=19"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -115,17 +115,22 @@
         ? 'Ultrasound'
         : 'Investigations &amp; Results';
 
+      const dt = LabApp.formatReportDateParts(draft.report_date);
+
       document.getElementById('sheet').innerHTML = `
         <div class="report-topbar"></div>
         <div class="report-header">
-          <div class="brand">
+          <div class="rh-left">
             <img src="/api/static/img/petzonelogo.png" alt="PetZone">
-            <div>
-              <h1>PetZone Laboratory</h1>
-              <div class="sub">Diagnostic Laboratory Report</div>
-              <div class="lab-tagline">PetZone Hospital Â· Veterinary Diagnostics</div>
-              <div class="report-datetime"><span class="dt-label">Date &amp; Time</span>${LabApp.escapeHtml(LabApp.formatReportDateTime(draft.report_date))}</div>
-            </div>
+          </div>
+          <div class="rh-center">
+            <h1>PetZone Laboratory</h1>
+            <div class="sub">Diagnostic Laboratory Report</div>
+          </div>
+          <div class="rh-right">
+            <div class="dt-label">Date &amp; Time</div>
+            <div class="dt-date">${LabApp.escapeHtml(dt.date)}</div>
+            <div class="dt-time">${LabApp.escapeHtml(dt.time)}</div>
           </div>
         </div>
         <div class="report-section-title">Patient Information</div>

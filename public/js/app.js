@@ -81,7 +81,7 @@ const LabApp = {
    * Date + time stamp for printed reports.
    * Prefers created_at (has time); else report_date + current clock time.
    */
-  formatReportDateTime(reportDate, createdAt) {
+  formatReportDateParts(reportDate, createdAt) {
     let d = null;
     if (createdAt) {
       const parsed = new Date(createdAt);
@@ -98,17 +98,21 @@ const LabApp = {
     }
     if (!d) d = new Date();
 
-    const datePart = d.toLocaleDateString('en-GB', {
+    const date = d.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     });
-    const timePart = d.toLocaleTimeString('en-GB', {
+    const time = d.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
     });
-    return `${datePart} · ${timePart}`;
+    return { date, time, full: `${date} · ${time}` };
+  },
+
+  formatReportDateTime(reportDate, createdAt) {
+    return this.formatReportDateParts(reportDate, createdAt).full;
   },
 
   escapeHtml(value) {
@@ -190,6 +194,8 @@ const LabApp = {
       <div class="remarks-handwrite">
         <strong>Remarks</strong>
         <div class="remarks-lines" aria-hidden="true">
+          <div class="line"></div>
+          <div class="line"></div>
           <div class="line"></div>
           <div class="line"></div>
           <div class="line"></div>
