@@ -1,7 +1,7 @@
 const LabApp = {
   tokenKey: 'lab_token',
   draftKey: 'lab_report_draft',
-  version: 7,
+  version: 9,
 
   getToken() {
     return localStorage.getItem(this.tokenKey) || '';
@@ -35,6 +35,25 @@ const LabApp = {
       throw err;
     }
     return data;
+  },
+
+  async uploadImage(file) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const headers = {};
+    const token = this.getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch('/api/uploads', {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || 'Image upload failed');
+    }
+    return data.image;
   },
 
   async requireAuth() {
@@ -81,12 +100,140 @@ const LabApp = {
       sample_date: this.today(),
       report_date: this.today(),
       remarks: '',
+      clinical_notes: '',
       status: 'final',
       panel_ids: [],
       included_parameter_ids: null,
       parameter_ids_snapshot: [],
       results: {},
+      images: [],
+      forms: {},
     };
+  },
+
+  emptySkinScraping() {
+    return {
+      sample_site: '',
+      lesion_types: [],
+      lesion_other: '',
+      scraping_types: [],
+      scraping_other: '',
+      microscopy: [],
+      microscopy_other: '',
+      mites: [],
+      mites_other: '',
+      fungal: [],
+      fungal_other: '',
+      bacteria: [],
+      yeast: [],
+      yeast_other: '',
+      other_findings: '',
+      result: '',
+      positive_for: '',
+      interpretation: '',
+      recommendations: '',
+    };
+  },
+
+  getSkinScraping(draft) {
+    const d = draft || this.getDraft();
+    return { ...this.emptySkinScraping(), ...((d.forms && d.forms.SKIN_SCRAPING) || {}) };
+  },
+
+  mark(checked) {
+    return checked ? '☑' : '☐';
+  },
+
+  renderSkinScrapingHtml(data) {
+    const d = { ...this.emptySkinScraping(), ...(data || {}) };
+    const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
+    const m = (arr, key) => this.mark(has(arr, key));
+    const line = (text) => this.escapeHtml(text || '');
+    const blank = (v) => this.escapeHtml(v || '_______________');
+
+    return `
+      <section class="report-panel skin-form">
+        <h2>SKIN SCRAPING</h2>
+        <div class="skin-section">
+          <h3>Sample / Test Details</h3>
+          <p><strong>Sample Site:</strong> ${blank(d.sample_site)}</p>
+          <p><strong>Lesion Type:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.lesion_types, 'alopecia')} Alopecia</span>
+            <span>${m(d.lesion_types, 'pruritus')} Pruritus</span>
+            <span>${m(d.lesion_types, 'crusts')} Crusts</span>
+            <span>${m(d.lesion_types, 'scaling')} Scaling</span>
+            <span>${m(d.lesion_types, 'papules')} Papules</span>
+            <span>${m(d.lesion_types, 'pustules')} Pustules</span>
+            <span>${m(d.lesion_types, 'erythema')} Erythema</span>
+            <span>${m(d.lesion_types, 'other')} Other: ${blank(d.lesion_other)}</span>
+          </div>
+          <p><strong>Scraping Type:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.scraping_types, 'deep')} Deep Skin Scraping</span>
+            <span>${m(d.scraping_types, 'superficial')} Superficial Skin Scraping</span>
+            <span>${m(d.scraping_types, 'tape')} Tape Impression</span>
+            <span>${m(d.scraping_types, 'other')} Other: ${blank(d.scraping_other)}</span>
+          </div>
+          <p><strong>Microscopy:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.microscopy, 'direct')} Direct Examination</span>
+            <span>${m(d.microscopy, 'koh')} KOH</span>
+            <span>${m(d.microscopy, 'oil')} Mineral Oil</span>
+            <span>${m(d.microscopy, 'other')} Other: ${blank(d.microscopy_other)}</span>
+          </div>
+        </div>
+
+        <div class="skin-section">
+          <h3>Microscopic Findings</h3>
+          <p><strong>Mites:</strong></p>
+          <div class="tick-col">
+            <div>${m(d.mites, 'not_seen')} Not Seen</div>
+            <div>${m(d.mites, 'demodex')} Demodex spp.</div>
+            <div>${m(d.mites, 'sarcoptes')} Sarcoptes spp.</div>
+            <div>${m(d.mites, 'otodectes')} Otodectes spp.</div>
+            <div>${m(d.mites, 'other')} Other: ${blank(d.mites_other)}</div>
+          </div>
+          <p><strong>Fungal Elements:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.fungal, 'not_seen')} Not Seen</span>
+            <span>${m(d.fungal, 'spores')} Spores</span>
+            <span>${m(d.fungal, 'hyphae')} Hyphae</span>
+            <span>${m(d.fungal, 'other')} Other: ${blank(d.fungal_other)}</span>
+          </div>
+          <p><strong>Bacteria:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.bacteria, 'not_seen')} Not Seen</span>
+            <span>${m(d.bacteria, 'cocci')} Cocci</span>
+            <span>${m(d.bacteria, 'rods')} Rods</span>
+            <span>${m(d.bacteria, 'mixed')} Mixed</span>
+          </div>
+          <p><strong>Yeast:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.yeast, 'not_seen')} Not Seen</span>
+            <span>${m(d.yeast, 'malassezia')} Malassezia spp.</span>
+            <span>${m(d.yeast, 'other')} Other: ${blank(d.yeast_other)}</span>
+          </div>
+          <p><strong>Other Findings:</strong></p>
+          <div class="write-lines">${line(d.other_findings) || '&nbsp;<br>&nbsp;<br>&nbsp;'}</div>
+        </div>
+
+        <div class="skin-section">
+          <h3>Result / Impression</h3>
+          <div class="tick-col">
+            <div>${this.mark(d.result === 'negative')} Negative / No significant organisms detected</div>
+            <div>${this.mark(d.result === 'positive')} Positive for: ${blank(d.positive_for)}</div>
+          </div>
+          <p><strong>Final Interpretation:</strong></p>
+          <div class="write-lines">${line(d.interpretation) || '&nbsp;<br>&nbsp;<br>&nbsp;'}</div>
+        </div>
+
+        <div class="skin-section">
+          <h3>Recommendations</h3>
+          <div class="write-lines">${line(d.recommendations) || '&nbsp;<br>&nbsp;<br>&nbsp;'}</div>
+        </div>
+      </section>
+    `;
   },
 
   getDraft() {
@@ -112,6 +259,9 @@ const LabApp = {
       } else {
         draft.results = {};
       }
+      if (!Array.isArray(draft.images)) draft.images = [];
+      draft.clinical_notes = draft.clinical_notes || '';
+      if (!draft.forms || typeof draft.forms !== 'object') draft.forms = {};
       return draft;
     } catch (_) {
       return this.emptyDraft();

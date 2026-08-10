@@ -335,6 +335,62 @@ table.data tr:hover td { background: #FFF8FA; }
 .report-panel .col-ref { width: 28%; }
 
 .remarks-box { border: 1.5px solid #111; padding: 10px 12px; font-size: 13px; margin-bottom: 16px; }
+.remarks-box-lg { min-height: 90px; }
+.remarks-body { margin-top: 8px; white-space: pre-wrap; line-height: 1.5; }
+.result-val { white-space: pre-wrap; }
+
+.report-images {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px;
+}
+.report-image {
+  margin: 0;
+  border: 1px solid #111;
+  padding: 6px;
+  page-break-inside: avoid;
+}
+.report-image img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  display: block;
+}
+
+.skin-form .skin-section {
+  padding: 10px 12px 14px;
+  border-bottom: 1px solid #ddd;
+}
+.skin-form .skin-section:last-child { border-bottom: 0; }
+.skin-form h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #111;
+  background: transparent !important;
+  padding: 0 !important;
+}
+.skin-form p { margin: 6px 0; font-size: 13px; }
+.tick-row, .tick-col {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  font-size: 13px; margin: 4px 0 10px;
+}
+.tick-col { flex-direction: column; gap: 4px; }
+.write-lines {
+  min-height: 64px;
+  border: 1px solid #111;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+@media print {
+  .report-images { grid-template-columns: repeat(2, 1fr); }
+}
 
 .report-footer {
   margin-top: 22px; padding-top: 12px; border-top: 2px solid #111;

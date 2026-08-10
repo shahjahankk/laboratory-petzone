@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=7">
+  <link rel="stylesheet" href="/api/static/styles.css?v=9">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
     tr.param-off { opacity: 0.45; background: #f9fafb; }
-    tr.param-off .val { pointer-events: none; background: #f3f4f6; }
+    tr.param-off .val, tr.param-off .val-area { pointer-events: none; background: #f3f4f6; }
     .results-hint { margin-bottom: 14px; }
     .result-block-head {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -41,6 +41,49 @@
       width: 22px; height: 22px; border-radius: 50%;
       background: var(--blue); color: #fff; font-size: 16px; line-height: 1;
     }
+    .us-extra { padding: 14px 16px 16px; border-top: 1px solid var(--gray-200); background: #fafbfc; }
+    .us-extra label { display: block; font-size: 13px; font-weight: 700; color: var(--blue); margin: 0 0 6px; }
+    .us-extra textarea {
+      width: 100%; min-height: 140px; padding: 12px; font-size: 14px; line-height: 1.5;
+      border: 1px solid var(--gray-200); border-radius: 10px; resize: vertical;
+    }
+    .val-area { width: 100%; min-height: 64px; padding: 8px 10px; font-size: 14px; resize: vertical; }
+    .us-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 10px; }
+    .us-thumb {
+      position: relative; border: 1px solid var(--gray-200); border-radius: 10px;
+      overflow: hidden; background: #fff; aspect-ratio: 1;
+    }
+    .us-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .us-thumb button {
+      position: absolute; top: 6px; right: 6px; border: 0; border-radius: 6px;
+      background: rgba(153,27,27,0.9); color: #fff; font-size: 11px; padding: 4px 8px; cursor: pointer;
+    }
+    .us-upload-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+    .skin-editor { padding: 16px; background: #fafbfc; }
+    .skin-editor h4 {
+      margin: 18px 0 10px; color: var(--blue); font-size: 14px; text-transform: uppercase;
+      letter-spacing: 0.04em; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;
+    }
+    .skin-editor h4:first-child { margin-top: 0; }
+    .skin-editor .field-row { margin-bottom: 10px; }
+    .skin-editor .field-row > label.main-label {
+      display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #111;
+    }
+    .tick-grid {
+      display: flex; flex-wrap: wrap; gap: 8px 14px;
+    }
+    .tick-grid label {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+      min-width: 160px; cursor: pointer;
+    }
+    .tick-grid input { width: auto; margin: 0; }
+    .skin-editor input[type="text"], .skin-editor textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--gray-200);
+      border-radius: 8px; font-size: 14px;
+    }
+    .skin-editor textarea { min-height: 88px; resize: vertical; }
+    .inline-other { display: inline-flex; align-items: center; gap: 6px; min-width: 220px; }
+    .inline-other input[type="text"] { width: 140px; padding: 6px 8px; }
   </style>
 </head>
 <body>
@@ -57,11 +100,12 @@
     <p class="hint" style="margin-bottom:16px;">Step 3 of 4 — Uncheck fields you do not want on the printed report</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
+    <div id="okAlert" class="alert alert-ok" style="display:none;"></div>
 
     <div class="card" style="margin-bottom:16px;">
       <p class="hint" id="summary" style="margin:0 0 4px;"></p>
       <p class="hint results-hint">
-        All fields are checked by default. Uncheck any test you are not running. Use Remove to drop a whole panel.
+        All fields are checked by default. For Ultrasound, upload images and write doctor remarks below the panel.
       </p>
 
       <div id="resultsArea"><p class="hint">Loading...</p></div>
@@ -87,7 +131,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=7"></script>
+  <script src="/api/static/app.js?v=9"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -96,6 +140,14 @@
       const el = document.getElementById('alert');
       el.style.display = msg ? 'block' : 'none';
       el.textContent = msg || '';
+      if (msg) document.getElementById('okAlert').style.display = 'none';
+    }
+
+    function showOk(msg) {
+      const el = document.getElementById('okAlert');
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg || '';
+      if (msg) document.getElementById('alert').style.display = 'none';
     }
 
     function refFor(param, sp) {
@@ -106,8 +158,174 @@
     function syncRowState(tr) {
       const on = tr.querySelector('.include').checked;
       tr.classList.toggle('param-off', !on);
-      const input = tr.querySelector('.val');
-      if (input) input.disabled = !on;
+      tr.querySelectorAll('.val, .val-area').forEach((input) => { input.disabled = !on; });
+    }
+
+    function isLongField(param) {
+      const code = String(param.code || '').toUpperCase();
+      return code === 'FINDINGS' || code === 'IMPRESSION' || code === 'OTHER';
+    }
+
+    function collectChecked(name) {
+      return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((el) => el.value);
+    }
+
+    function collectSkinScraping() {
+      if (!document.getElementById('skinScrapingForm')) {
+        return LabApp.getSkinScraping();
+      }
+      const resultPositive = document.querySelector('input[name="skin_result"][value="positive"]')?.checked;
+      const resultNegative = document.querySelector('input[name="skin_result"][value="negative"]')?.checked;
+      return {
+        sample_site: document.getElementById('skin_sample_site')?.value.trim() || '',
+        lesion_types: collectChecked('skin_lesion'),
+        lesion_other: document.getElementById('skin_lesion_other')?.value.trim() || '',
+        scraping_types: collectChecked('skin_scraping_type'),
+        scraping_other: document.getElementById('skin_scraping_other')?.value.trim() || '',
+        microscopy: collectChecked('skin_microscopy'),
+        microscopy_other: document.getElementById('skin_microscopy_other')?.value.trim() || '',
+        mites: collectChecked('skin_mites'),
+        mites_other: document.getElementById('skin_mites_other')?.value.trim() || '',
+        fungal: collectChecked('skin_fungal'),
+        fungal_other: document.getElementById('skin_fungal_other')?.value.trim() || '',
+        bacteria: collectChecked('skin_bacteria'),
+        yeast: collectChecked('skin_yeast'),
+        yeast_other: document.getElementById('skin_yeast_other')?.value.trim() || '',
+        other_findings: document.getElementById('skin_other_findings')?.value.trim() || '',
+        result: resultPositive ? 'positive' : (resultNegative ? 'negative' : ''),
+        positive_for: document.getElementById('skin_positive_for')?.value.trim() || '',
+        interpretation: document.getElementById('skin_interpretation')?.value.trim() || '',
+        recommendations: document.getElementById('skin_recommendations')?.value.trim() || '',
+      };
+    }
+
+    function tick(name, value, label, checked) {
+      return `<label><input type="checkbox" name="${name}" value="${value}" ${checked ? 'checked' : ''}> ${label}</label>`;
+    }
+
+    function skinScrapingFormHtml(data) {
+      const d = { ...LabApp.emptySkinScraping(), ...(data || {}) };
+      const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
+      return `
+        <div class="skin-editor" id="skinScrapingForm">
+          <h4>Sample / Test Details</h4>
+          <div class="field-row">
+            <label class="main-label" for="skin_sample_site">Sample Site</label>
+            <input type="text" id="skin_sample_site" value="${LabApp.escapeHtml(d.sample_site)}" placeholder="e.g. ventral abdomen, pinna, dorsal neck">
+          </div>
+          <div class="field-row">
+            <label class="main-label">Lesion Type</label>
+            <div class="tick-grid">
+              ${tick('skin_lesion', 'alopecia', 'Alopecia', on(d.lesion_types, 'alopecia'))}
+              ${tick('skin_lesion', 'pruritus', 'Pruritus', on(d.lesion_types, 'pruritus'))}
+              ${tick('skin_lesion', 'crusts', 'Crusts', on(d.lesion_types, 'crusts'))}
+              ${tick('skin_lesion', 'scaling', 'Scaling', on(d.lesion_types, 'scaling'))}
+              ${tick('skin_lesion', 'papules', 'Papules', on(d.lesion_types, 'papules'))}
+              ${tick('skin_lesion', 'pustules', 'Pustules', on(d.lesion_types, 'pustules'))}
+              ${tick('skin_lesion', 'erythema', 'Erythema', on(d.lesion_types, 'erythema'))}
+              <label class="inline-other">
+                <input type="checkbox" name="skin_lesion" value="other" ${on(d.lesion_types, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="skin_lesion_other" value="${LabApp.escapeHtml(d.lesion_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Scraping Type</label>
+            <div class="tick-grid">
+              ${tick('skin_scraping_type', 'deep', 'Deep Skin Scraping', on(d.scraping_types, 'deep'))}
+              ${tick('skin_scraping_type', 'superficial', 'Superficial Skin Scraping', on(d.scraping_types, 'superficial'))}
+              ${tick('skin_scraping_type', 'tape', 'Tape Impression', on(d.scraping_types, 'tape'))}
+              <label class="inline-other">
+                <input type="checkbox" name="skin_scraping_type" value="other" ${on(d.scraping_types, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="skin_scraping_other" value="${LabApp.escapeHtml(d.scraping_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Microscopy</label>
+            <div class="tick-grid">
+              ${tick('skin_microscopy', 'direct', 'Direct Examination', on(d.microscopy, 'direct'))}
+              ${tick('skin_microscopy', 'koh', 'KOH', on(d.microscopy, 'koh'))}
+              ${tick('skin_microscopy', 'oil', 'Mineral Oil', on(d.microscopy, 'oil'))}
+              <label class="inline-other">
+                <input type="checkbox" name="skin_microscopy" value="other" ${on(d.microscopy, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="skin_microscopy_other" value="${LabApp.escapeHtml(d.microscopy_other)}">
+              </label>
+            </div>
+          </div>
+
+          <h4>Microscopic Findings</h4>
+          <div class="field-row">
+            <label class="main-label">Mites</label>
+            <div class="tick-grid">
+              ${tick('skin_mites', 'not_seen', 'Not Seen', on(d.mites, 'not_seen'))}
+              ${tick('skin_mites', 'demodex', 'Demodex spp.', on(d.mites, 'demodex'))}
+              ${tick('skin_mites', 'sarcoptes', 'Sarcoptes spp.', on(d.mites, 'sarcoptes'))}
+              ${tick('skin_mites', 'otodectes', 'Otodectes spp.', on(d.mites, 'otodectes'))}
+              <label class="inline-other">
+                <input type="checkbox" name="skin_mites" value="other" ${on(d.mites, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="skin_mites_other" value="${LabApp.escapeHtml(d.mites_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Fungal Elements</label>
+            <div class="tick-grid">
+              ${tick('skin_fungal', 'not_seen', 'Not Seen', on(d.fungal, 'not_seen'))}
+              ${tick('skin_fungal', 'spores', 'Spores', on(d.fungal, 'spores'))}
+              ${tick('skin_fungal', 'hyphae', 'Hyphae', on(d.fungal, 'hyphae'))}
+              <label class="inline-other">
+                <input type="checkbox" name="skin_fungal" value="other" ${on(d.fungal, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="skin_fungal_other" value="${LabApp.escapeHtml(d.fungal_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Bacteria</label>
+            <div class="tick-grid">
+              ${tick('skin_bacteria', 'not_seen', 'Not Seen', on(d.bacteria, 'not_seen'))}
+              ${tick('skin_bacteria', 'cocci', 'Cocci', on(d.bacteria, 'cocci'))}
+              ${tick('skin_bacteria', 'rods', 'Rods', on(d.bacteria, 'rods'))}
+              ${tick('skin_bacteria', 'mixed', 'Mixed', on(d.bacteria, 'mixed'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Yeast</label>
+            <div class="tick-grid">
+              ${tick('skin_yeast', 'not_seen', 'Not Seen', on(d.yeast, 'not_seen'))}
+              ${tick('skin_yeast', 'malassezia', 'Malassezia spp.', on(d.yeast, 'malassezia'))}
+              <label class="inline-other">
+                <input type="checkbox" name="skin_yeast" value="other" ${on(d.yeast, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="skin_yeast_other" value="${LabApp.escapeHtml(d.yeast_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="skin_other_findings">Other Findings</label>
+            <textarea id="skin_other_findings" placeholder="Write other findings...">${LabApp.escapeHtml(d.other_findings)}</textarea>
+          </div>
+
+          <h4>Result / Impression</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              <label><input type="radio" name="skin_result" value="negative" ${d.result === 'negative' ? 'checked' : ''}> Negative / No significant organisms detected</label>
+              <label class="inline-other" style="min-width:280px;">
+                <input type="radio" name="skin_result" value="positive" ${d.result === 'positive' ? 'checked' : ''}> Positive for:
+                <input type="text" id="skin_positive_for" value="${LabApp.escapeHtml(d.positive_for)}" placeholder="organism / finding">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="skin_interpretation">Final Interpretation</label>
+            <textarea id="skin_interpretation" placeholder="Final interpretation...">${LabApp.escapeHtml(d.interpretation)}</textarea>
+          </div>
+
+          <h4>Recommendations</h4>
+          <div class="field-row">
+            <textarea id="skin_recommendations" placeholder="Recommendations...">${LabApp.escapeHtml(d.recommendations)}</textarea>
+          </div>
+        </div>
+      `;
     }
 
     function collectState() {
@@ -118,17 +336,32 @@
       document.querySelectorAll('#resultsArea tr[data-parameter-id]').forEach((tr) => {
         const id = Number(tr.dataset.parameterId);
         snapshot.push(id);
-        const input = tr.querySelector('.val');
+        const input = tr.querySelector('.val, .val-area');
         const checked = tr.querySelector('.include')?.checked;
         results[String(id)] = input ? input.value.trim() : '';
         if (checked) included.push(id);
       });
+
+      const notesEl = document.getElementById('doctorRemarks');
+      const clinical_notes = notesEl ? notesEl.value.trim() : (draft.clinical_notes || '');
+      const forms = { ...(draft.forms || {}) };
+      if (hasSkinScraping()) {
+        forms.SKIN_SCRAPING = collectSkinScraping();
+      }
+
       return {
         panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
         results,
         included_parameter_ids: included,
         parameter_ids_snapshot: snapshot,
+        clinical_notes,
+        images: draft.images || [],
+        forms,
       };
+    }
+
+    function hasSkinScraping() {
+      return selectedPanels().some((p) => String(p.code).toUpperCase() === 'SKIN_SCRAPING');
     }
 
     function persistForm() {
@@ -138,6 +371,46 @@
     function selectedPanels() {
       const idSet = new Set((LabApp.getDraft().panel_ids || []).map(Number));
       return allPanels.filter((p) => idSet.has(Number(p.id)));
+    }
+
+    function hasUltrasound() {
+      return selectedPanels().some((p) => String(p.code).toUpperCase() === 'ULTRASOUND');
+    }
+
+    function renderImages() {
+      const draft = LabApp.getDraft();
+      const box = document.getElementById('usImages');
+      if (!box) return;
+      const images = draft.images || [];
+      if (!images.length) {
+        box.innerHTML = '<p class="hint" style="margin:0;">No images uploaded yet.</p>';
+        return;
+      }
+      box.innerHTML = images.map((img) => `
+        <div class="us-thumb" data-image-id="${img.id}">
+          <img src="${LabApp.escapeHtml(img.url)}" alt="${LabApp.escapeHtml(img.original_name || 'Ultrasound')}">
+          <button type="button" data-remove-image="${img.id}">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    function ultrasoundExtraHtml(draft) {
+      if (!hasUltrasound()) return '';
+      return `
+        <div class="us-extra" id="ultrasoundExtra">
+          <label for="usImageInput">Ultrasound images</label>
+          <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each).</p>
+          <div class="us-upload-row">
+            <input type="file" id="usImageInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+            <button type="button" class="btn btn-primary btn-sm" id="usUploadBtn">Upload</button>
+          </div>
+          <div class="us-images" id="usImages"></div>
+
+          <label for="doctorRemarks" style="margin-top:16px;">Doctor remarks / notes</label>
+          <p class="hint" style="margin:0 0 8px;">Space for the doctor to write findings commentary for the printed report.</p>
+          <textarea id="doctorRemarks" placeholder="Write ultrasound remarks here...">${LabApp.escapeHtml(draft.clinical_notes || '')}</textarea>
+        </div>
+      `;
     }
 
     function renderResults() {
@@ -154,8 +427,24 @@
         return;
       }
 
-      area.innerHTML = selected.map((panel) => `
-        <div class="result-block" data-panel-id="${panel.id}">
+      area.innerHTML = selected.map((panel) => {
+        const code = String(panel.code).toUpperCase();
+        const isUs = code === 'ULTRASOUND';
+        const isSkin = code === 'SKIN_SCRAPING';
+
+        if (isSkin) {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${skinScrapingFormHtml(LabApp.getSkinScraping(draft))}
+          </div>`;
+        }
+
+        return `
+        <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
           <div class="result-block-head">
             <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
             <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
@@ -164,32 +453,38 @@
             <thead>
               <tr>
                 <th class="include-col">Print</th>
-                <th style="width:36%">Parameter</th>
-                <th style="width:18%">Result</th>
-                <th style="width:14%">Unit</th>
-                <th style="width:24%">Reference (${LabApp.escapeHtml(species)})</th>
+                <th style="width:28%">Parameter</th>
+                <th style="width:36%">Result</th>
+                <th style="width:12%">Unit</th>
+                <th style="width:16%">Reference</th>
               </tr>
             </thead>
             <tbody>
               ${(panel.parameters || []).map((param) => {
                 const on = includedSet.has(Number(param.id));
                 const val = saved[param.id] || saved[String(param.id)] || '';
+                const long = isLongField(param) || isUs;
+                const field = long
+                  ? `<textarea class="val-area" ${on ? '' : 'disabled'} placeholder="Enter details...">${LabApp.escapeHtml(val)}</textarea>`
+                  : `<input class="val" value="${LabApp.escapeHtml(val)}" placeholder="Value" ${on ? '' : 'disabled'}>`;
                 return `
                 <tr data-parameter-id="${param.id}" class="${on ? '' : 'param-off'}">
                   <td class="include-col">
                     <input class="include" type="checkbox" ${on ? 'checked' : ''} title="Include on printed report">
                   </td>
                   <td>${LabApp.escapeHtml(param.name)}</td>
-                  <td><input class="val" value="${LabApp.escapeHtml(val)}" placeholder="Value" inputmode="decimal" ${on ? '' : 'disabled'}></td>
+                  <td>${field}</td>
                   <td>${LabApp.escapeHtml(param.unit || '—')}</td>
                   <td>${LabApp.escapeHtml(refFor(param, species))}</td>
                 </tr>`;
-              }).join('')}
+              }).join('') || '<tr><td colspan="5" class="hint">No parameters on this panel.</td></tr>'}
             </tbody>
           </table>
-        </div>
-      `).join('');
+          ${isUs ? ultrasoundExtraHtml(draft) : ''}
+        </div>`;
+      }).join('');
 
+      if (hasUltrasound()) renderImages();
       renderAddPicker();
     }
 
@@ -197,12 +492,10 @@
       const chosen = new Set((LabApp.getDraft().panel_ids || []).map(Number));
       const available = allPanels.filter((p) => !chosen.has(Number(p.id)));
       const box = document.getElementById('extraPanelChecks');
-
       if (!available.length) {
         box.innerHTML = '<p class="hint">All available panels are already added.</p>';
         return;
       }
-
       box.innerHTML = available.map((p) => `
         <button type="button" class="panel-check" data-add-panel="${p.id}" style="width:100%; text-align:left; font:inherit;">
           <span class="plus" style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;align-items:center;justify-content:center;flex-shrink:0;">+</span>
@@ -222,7 +515,6 @@
       showAlert('');
       renderResults();
       document.getElementById('addTestsPanel').classList.remove('open');
-
       const block = document.querySelector(`.result-block[data-panel-id="${panelId}"]`);
       if (block) block.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -232,7 +524,6 @@
       const draft = LabApp.getDraft();
       const panel = allPanels.find((p) => Number(p.id) === Number(panelId));
       const paramIds = new Set((panel?.parameters || []).map((x) => Number(x.id)));
-
       const panel_ids = (draft.panel_ids || []).map(Number).filter((id) => id !== Number(panelId));
       if (!panel_ids.length) {
         showAlert('Keep at least one test panel, or go back to select tests.');
@@ -249,15 +540,55 @@
         ? draft.included_parameter_ids.map(Number).filter((id) => !paramIds.has(id))
         : null;
       let snapshot = (draft.parameter_ids_snapshot || []).map(Number).filter((id) => !paramIds.has(id));
-
-      LabApp.saveDraft({
-        panel_ids,
-        results,
-        included_parameter_ids: included,
-        parameter_ids_snapshot: snapshot,
-      });
+      const patch = { panel_ids, results, included_parameter_ids: included, parameter_ids_snapshot: snapshot };
+      if (panel && String(panel.code).toUpperCase() === 'ULTRASOUND') {
+        patch.clinical_notes = '';
+        patch.images = draft.images || [];
+      }
+      if (panel && String(panel.code).toUpperCase() === 'SKIN_SCRAPING') {
+        const forms = { ...(draft.forms || {}) };
+        delete forms.SKIN_SCRAPING;
+        patch.forms = forms;
+      }
+      LabApp.saveDraft(patch);
       showAlert('');
       renderResults();
+    }
+
+    async function uploadSelectedImages() {
+      const input = document.getElementById('usImageInput');
+      if (!input || !input.files?.length) {
+        showAlert('Choose one or more image files first.');
+        return;
+      }
+      persistForm();
+      showAlert('');
+      const draft = LabApp.getDraft();
+      const images = [...(draft.images || [])];
+      try {
+        for (const file of input.files) {
+          const img = await LabApp.uploadImage(file);
+          images.push(img);
+        }
+        LabApp.saveDraft({ images });
+        input.value = '';
+        showOk('Image(s) uploaded');
+        renderImages();
+      } catch (err) {
+        showAlert(err.message || 'Upload failed');
+      }
+    }
+
+    async function removeImage(id) {
+      persistForm();
+      try {
+        await LabApp.api(`/api/uploads/${id}`, { method: 'DELETE' });
+      } catch (_) {
+        // still drop from draft if server delete fails (orphan cleanup later)
+      }
+      const draft = LabApp.getDraft();
+      LabApp.saveDraft({ images: (draft.images || []).filter((img) => Number(img.id) !== Number(id)) });
+      renderImages();
     }
 
     function goNext() {
@@ -267,7 +598,7 @@
         showAlert('Add at least one test panel.');
         return;
       }
-      if (!state.included_parameter_ids.length) {
+      if (!state.included_parameter_ids.length && !hasSkinScraping()) {
         showAlert('Keep at least one field checked to print on the report.');
         return;
       }
@@ -282,8 +613,7 @@
 
     document.getElementById('addTestBtn').addEventListener('click', () => {
       persistForm();
-      const panel = document.getElementById('addTestsPanel');
-      panel.classList.toggle('open');
+      document.getElementById('addTestsPanel').classList.toggle('open');
       renderAddPicker();
     });
 
@@ -303,14 +633,25 @@
       }
     });
 
-    document.getElementById('resultsArea').addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-remove-panel]');
-      if (!btn) return;
-      const id = Number(btn.getAttribute('data-remove-panel'));
-      const panel = allPanels.find((p) => Number(p.id) === id);
-      const label = panel ? `${panel.code}` : 'this panel';
-      if (!window.confirm(`Remove ${label} from this report?`)) return;
-      removePanel(id);
+    document.getElementById('resultsArea').addEventListener('click', async (e) => {
+      const removePanelBtn = e.target.closest('[data-remove-panel]');
+      if (removePanelBtn) {
+        const id = Number(removePanelBtn.getAttribute('data-remove-panel'));
+        const panel = allPanels.find((p) => Number(p.id) === id);
+        const label = panel ? panel.code : 'this panel';
+        if (!window.confirm(`Remove ${label} from this report?`)) return;
+        removePanel(id);
+        return;
+      }
+      if (e.target.id === 'usUploadBtn') {
+        e.preventDefault();
+        await uploadSelectedImages();
+        return;
+      }
+      const removeImg = e.target.closest('[data-remove-image]');
+      if (removeImg) {
+        await removeImage(Number(removeImg.getAttribute('data-remove-image')));
+      }
     });
 
     (async () => {

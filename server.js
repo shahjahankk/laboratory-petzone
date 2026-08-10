@@ -88,6 +88,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/patients', patientsRoutes);
+app.use('/api/uploads', require('./routes/uploads'));
 
 // Serve CSS/JS/img via /api/static — Apache/LiteSpeed often 404s /css /js /img
 // before Passenger; /api/* always reaches Node.

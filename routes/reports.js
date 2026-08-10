@@ -85,7 +85,55 @@ async function loadReportBundle(reportId) {
     results: mappedResults.filter((r) => r.panel_id === panel.id),
   }));
 
-  return { ...report, panels: panelsWithResults };
+  let images = [];
+  try {
+    images = await executeQuery(
+      `SELECT id, report_id, stored_name, original_name, display_order
+       FROM lab_report_images
+       WHERE report_id = ?
+       ORDER BY display_order ASC, id ASC`,
+      [reportId]
+    );
+    images = images.map((img) => ({
+      ...img,
+      url: `/api/uploads/file/${encodeURIComponent(img.stored_name)}`,
+    }));
+  } catch (_) {
+    images = [];
+  }
+
+  let forms = {};
+  try {
+    const formRows = await executeQuery(
+      `SELECT form_code, form_json FROM lab_report_forms WHERE report_id = ?`,
+      [reportId]
+    );
+    for (const row of formRows) {
+      try {
+        forms[row.form_code] = JSON.parse(row.form_json);
+      } catch (_) {
+        forms[row.form_code] = {};
+      }
+    }
+  } catch (_) {
+    forms = {};
+  }
+
+  return { ...report, panels: panelsWithResults, images, forms };
+}
+
+async function saveReportForms(conn, reportId, forms) {
+  if (!forms || typeof forms !== 'object') return;
+  for (const [form_code, payload] of Object.entries(forms)) {
+    if (!form_code) continue;
+    const json = JSON.stringify(payload == null ? {} : payload);
+    await conn.execute(
+      `INSERT INTO lab_report_forms (report_id, form_code, form_json)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE form_json = VALUES(form_json)`,
+      [reportId, String(form_code).slice(0, 40), json]
+    );
+  }
 }
 
 router.get('/', authMiddleware, async (req, res) => {
@@ -157,6 +205,8 @@ router.post('/', authMiddleware, async (req, res) => {
       status,
       panel_ids,
       results,
+      image_ids,
+      forms,
     } = req.body;
 
     if (!patient_name || !pet_name) {
@@ -225,6 +275,18 @@ router.post('/', authMiddleware, async (req, res) => {
       );
     }
 
+    if (Array.isArray(image_ids)) {
+      const ids = image_ids.map(Number).filter(Boolean);
+      for (let i = 0; i < ids.length; i++) {
+        await conn.execute(
+          'UPDATE lab_report_images SET report_id = ?, display_order = ? WHERE id = ? AND (report_id IS NULL OR report_id = ?)',
+          [reportId, i, ids[i], reportId]
+        );
+      }
+    }
+
+    await saveReportForms(conn, reportId, forms);
+
     await conn.commit();
     const report = await loadReportBundle(reportId);
     res.status(201).json({ success: true, report });
@@ -261,6 +323,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
       status,
       panel_ids,
       results,
+      image_ids,
+      forms,
     } = req.body;
 
     const speciesNorm = normalizeSpecies(species);
@@ -320,6 +384,25 @@ router.put('/:id', authMiddleware, async (req, res) => {
           ]
         );
       }
+    }
+
+    if (Array.isArray(image_ids)) {
+      const ids = image_ids.map(Number).filter(Boolean);
+      await conn.execute(
+        'UPDATE lab_report_images SET report_id = NULL WHERE report_id = ?',
+        [reportId]
+      );
+      for (let i = 0; i < ids.length; i++) {
+        await conn.execute(
+          'UPDATE lab_report_images SET report_id = ?, display_order = ? WHERE id = ?',
+          [reportId, i, ids[i]]
+        );
+      }
+    }
+
+    if (forms && typeof forms === 'object') {
+      await conn.execute('DELETE FROM lab_report_forms WHERE report_id = ?', [reportId]);
+      await saveReportForms(conn, reportId, forms);
     }
 
     await conn.commit();

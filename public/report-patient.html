@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 1 · Patient — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=6">
+  <link rel="stylesheet" href="/api/static/styles.css?v=9">
 </head>
 <body>
   <header class="header">
@@ -118,7 +118,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=5"></script>
+  <script src="/api/static/app.js?v=9"></script>
   <script>
     let lastSearch = null;
 
@@ -378,11 +378,14 @@
             sample_date: String(r.sample_date || LabApp.today()).slice(0, 10),
             report_date: String(r.report_date || LabApp.today()).slice(0, 10),
             remarks: r.remarks || '',
+            clinical_notes: r.clinical_notes || '',
             status: r.status || 'final',
             panel_ids: (r.panels || []).map((p) => p.id),
             included_parameter_ids: included,
             parameter_ids_snapshot: included,
             results,
+            images: r.images || [],
+            forms: r.forms || {},
           });
         } else if (!localStorage.getItem(LabApp.draftKey) && !sessionStorage.getItem(LabApp.draftKey)) {
           LabApp.saveDraft(LabApp.emptyDraft());
