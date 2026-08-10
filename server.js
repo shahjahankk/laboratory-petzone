@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
@@ -23,28 +22,6 @@ connectDB().catch((err) => {
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
-}));
-
-const configuredCorsOrigins = (process.env.CORS_ORIGIN || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-app.use(cors({
-  origin(origin, callback) {
-    if (
-      !origin ||
-      configuredCorsOrigins.length === 0 ||
-      configuredCorsOrigins.includes(origin) ||
-      /^https:\/\/([a-z0-9-]+\.)*petzone\.pk$/i.test(origin) ||
-      /^http:\/\/localhost(?::\d+)?$/i.test(origin)
-    ) {
-      callback(null, true);
-      return;
-    }
-    callback(new Error(`CORS origin not allowed: ${origin}`));
-  },
-  credentials: true,
 }));
 
 app.use(morgan('dev'));
