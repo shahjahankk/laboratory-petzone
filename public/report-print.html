@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=22">
+  <link rel="stylesheet" href="/api/static/styles.css?v=23">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=22"></script>
+  <script src="/api/static/app.js?v=23"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -51,7 +51,7 @@
           if (isUs) {
             return `
         <section class="report-panel">
-          ${LabApp.renderUltrasoundHeadingHtml(report.forms?.ULTRASOUND, true)}
+          ${LabApp.renderUltrasoundHeadingHtml(report.forms?.ULTRASOUND)}
           ${LabApp.renderUltrasoundPanelHtml(report.forms?.ULTRASOUND)}
         </section>`;
           }
@@ -83,12 +83,13 @@
         </section>`;
         }).join('');
 
-      const sectionTitle = hasUs && (report.panels || []).every((p) => {
+      const usOnly = hasUs && (report.panels || []).every((p) => {
         const c = String(p.code).toUpperCase();
         return c === 'ULTRASOUND' || c === 'SKIN_SCRAPING' || !(p.results || []).length;
-      })
-        ? 'Ultrasound'
-        : 'Investigations &amp; Results';
+      });
+      const sectionTitleHtml = usOnly
+        ? ''
+        : '<div class="report-section-title">Investigations &amp; Results</div>';
 
       const dt = LabApp.formatReportDateParts(report.report_date, report.created_at);
 
@@ -124,7 +125,7 @@
           ${metaCell('Report Date', formatDate(report.report_date))}
         </div>
 
-        <div class="report-section-title">${sectionTitle}</div>
+        ${sectionTitleHtml}
         ${panelsHtml}
         ${report.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(report.forms.SKIN_SCRAPING) : ''}
 

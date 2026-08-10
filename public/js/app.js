@@ -195,15 +195,7 @@ const LabApp = {
     return typeText ? `Ultrasound - ${typeText}` : 'Ultrasound';
   },
 
-  renderUltrasoundHeadingHtml(usForm, asSplit) {
-    const typeText = this.formatUltrasoundTypeText(usForm);
-    if (asSplit && typeText) {
-      return `
-        <h2 class="panel-head-split">
-          <span class="panel-head-left">Ultrasound</span>
-          <span class="panel-head-right">${this.escapeHtml(typeText)}</span>
-        </h2>`;
-    }
+  renderUltrasoundHeadingHtml(usForm) {
     return `<h2>${this.escapeHtml(this.formatUltrasoundHeading(usForm))}</h2>`;
   },
 
@@ -220,28 +212,28 @@ const LabApp = {
     `;
   },
 
-  renderFilledNotesBoxHtml(title, text) {
+  renderFilledNotesBoxHtml(title, text, blankLines = 2) {
+    const body = String(text || '').trim();
+    if (!body) return this.renderHandwriteBoxHtml(title, blankLines);
     return `
       <div class="remarks-handwrite remarks-filled">
         <strong>${this.escapeHtml(title)}</strong>
-        <div class="remarks-body">${this.escapeHtml(text)}</div>
+        <div class="remarks-body">${this.escapeHtml(body)}</div>
       </div>
     `;
   },
 
-  /** Clinical History / Indication + blank Result / Impression / Remarks. */
+  /**
+   * Handwriting fields (exact order/names):
+   * Clinical History / Indication, Ultrasound Findings, Results / Impression, Recommendations
+   */
   renderUltrasoundPanelHtml(usForm) {
     const us = { ...this.emptyUltrasound(), ...(usForm || {}) };
-    const history = String(us.clinical_history || '').trim();
-    const historyBlock = history
-      ? this.renderFilledNotesBoxHtml('Clinical History / Indication', history)
-      : this.renderHandwriteBoxHtml('Clinical History / Indication', 5);
-
     return `
-      ${historyBlock}
-      ${this.renderHandwriteBoxHtml('Result', 4)}
-      ${this.renderHandwriteBoxHtml('Impression', 3)}
-      ${this.renderHandwriteBoxHtml('Remarks', 3)}
+      ${this.renderFilledNotesBoxHtml('Clinical History / Indication', us.clinical_history, 2)}
+      ${this.renderHandwriteBoxHtml('Ultrasound Findings', 8)}
+      ${this.renderHandwriteBoxHtml('Results / Impression', 4)}
+      ${this.renderHandwriteBoxHtml('Recommendations', 2)}
     `;
   },
 

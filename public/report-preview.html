@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4  -  Preview  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=22">
+  <link rel="stylesheet" href="/api/static/styles.css?v=23">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=22"></script>
+  <script src="/api/static/app.js?v=23"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -71,7 +71,7 @@
         if (code === 'ULTRASOUND') {
           return `
         <section class="report-panel">
-          ${LabApp.renderUltrasoundHeadingHtml(draft.forms?.ULTRASOUND, true)}
+          ${LabApp.renderUltrasoundHeadingHtml(draft.forms?.ULTRASOUND)}
           ${LabApp.renderUltrasoundPanelHtml(draft.forms?.ULTRASOUND)}
         </section>`;
         }
@@ -108,12 +108,13 @@
         ? LabApp.renderUltrasoundImagesHtml(images, draft.forms?.ULTRASOUND)
         : '';
 
-      const sectionTitle = hasUs && selected.every((p) => {
+      const usOnly = hasUs && selected.every((p) => {
         const c = String(p.code).toUpperCase();
         return c === 'ULTRASOUND' || c === 'SKIN_SCRAPING';
-      })
-        ? 'Ultrasound'
-        : 'Investigations &amp; Results';
+      });
+      const sectionTitleHtml = usOnly
+        ? ''
+        : '<div class="report-section-title">Investigations &amp; Results</div>';
 
       const dt = LabApp.formatReportDateParts(draft.report_date);
 
@@ -146,7 +147,7 @@
           ${metaCell('Sample Date', formatDate(draft.sample_date))}
           ${metaCell('Report Date', formatDate(draft.report_date))}
         </div>
-        <div class="report-section-title">${sectionTitle}</div>
+        ${sectionTitleHtml}
         ${panelsHtml}
         ${draft.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING) : ''}
         ${imagesHtml}

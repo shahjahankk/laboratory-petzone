@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3  -  Results  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=22">
+  <link rel="stylesheet" href="/api/static/styles.css?v=23">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -141,7 +141,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=22"></script>
+  <script src="/api/static/app.js?v=23"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -462,10 +462,7 @@
         us_types: collectChecked('us_type'),
         us_type_other: document.getElementById('us_type_other')?.value.trim() || '',
       };
-      const typeText = LabApp.formatUltrasoundTypeText(us);
-      el.innerHTML = typeText
-        ? `<span>Ultrasound</span><span class="us-head-cat">${LabApp.escapeHtml(typeText)}</span>`
-        : '<span>Ultrasound</span>';
+      el.textContent = LabApp.formatUltrasoundHeading(us);
     }
 
     function renderResults() {
@@ -499,13 +496,10 @@
         }
 
         if (isUs) {
-          const typeText = LabApp.formatUltrasoundTypeText(LabApp.getUltrasound(draft));
           return `
           <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
             <div class="result-block-head">
-              <h3 id="usPanelTitle" class="us-panel-title">${typeText
-                ? `<span>Ultrasound</span><span class="us-head-cat">${LabApp.escapeHtml(typeText)}</span>`
-                : '<span>Ultrasound</span>'}</h3>
+              <h3 id="usPanelTitle">${LabApp.escapeHtml(LabApp.formatUltrasoundHeading(LabApp.getUltrasound(draft)))}</h3>
               <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
             </div>
             ${ultrasoundTypeOnlyHtml(draft)}
