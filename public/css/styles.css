@@ -89,7 +89,7 @@ label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--gray-
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 }
 
@@ -463,7 +463,7 @@ table.data tr:hover td { background: #FFF8FA; }
 
 .report-panel {
   margin-bottom: 16px;
-  page-break-inside: avoid;
+  page-break-inside: auto;
   border: 1.5px solid var(--report-line);
   border-radius: 10px;
   overflow: hidden;
@@ -580,7 +580,7 @@ table.data tr:hover td { background: #FFF8FA; }
   gap: 0;
 }
 .remarks-handwrite .line {
-  height: 28px;
+  height: 22px;
   border-bottom: 1px solid #94a3b8;
 }
 .remarks-handwrite .line:last-child {
@@ -717,7 +717,7 @@ table.data tr:hover td { background: #FFF8FA; }
   margin-bottom: 0;
 }
 
-@page { size: A4; margin: 10mm; }
+@page { size: A4; margin: 8mm; }
 
 @media print {
   html, body {
@@ -725,23 +725,158 @@ table.data tr:hover td { background: #FFF8FA; }
     color: #000 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
   .no-print, .header { display: none !important; }
   .container.print-container,
   .preview-frame {
     max-width: none;
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #fff !important;
     border-radius: 0;
   }
   .report-sheet, .report-sheet-pro {
-    box-shadow: none;
-    border: none;
-    max-width: none;
-    padding: 0;
+    box-shadow: none !important;
+    border: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  .report-topbar { margin: 0 0 12px; height: 6px; }
+
+  /* Compact header — keep logo + title side-by-side like preview */
+  .report-topbar { margin: 0 0 6px !important; height: 4px !important; }
+  .report-header {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 2px !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 6px !important;
+  }
+  .report-header .brand {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    text-align: left !important;
+  }
+  .report-header img { height: 44px !important; }
+  .report-header h1 { font-size: 18px !important; text-align: left !important; }
+  .report-header .sub { font-size: 9px !important; margin-top: 2px !important; text-align: left !important; }
+  .report-header .lab-tagline { font-size: 9px !important; margin-top: 2px !important; text-align: left !important; }
+  .report-header .report-datetime { margin-top: 4px !important; font-size: 11px !important; text-align: center !important; }
+  .report-header .report-datetime .dt-label { font-size: 8px !important; }
+  .report-header .report-meta-line { font-size: 10px !important; margin-top: 1px !important; text-align: center !important; }
+
+  /* Patient info — always 2-column box like screen preview */
+  .report-section-title {
+    font-size: 9px !important;
+    margin: 0 0 4px !important;
+  }
+  .meta-card {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    margin-bottom: 8px !important;
+    border-radius: 6px !important;
+    border: 1.5px solid var(--report-line) !important;
+  }
+  .meta-cell {
+    display: flex !important;
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+  }
+  .meta-cell:nth-child(2n) { border-right: none !important; }
+  .meta-cell:nth-last-child(-n+2) { border-bottom: none !important; }
+  .meta-cell .k { min-width: 88px !important; font-size: 9px !important; }
+  .meta-cell .v { flex: 1 !important; }
+
+  /* Compact panels / tables */
+  .report-panel {
+    margin-bottom: 8px !important;
+    border-radius: 6px !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+  .report-panel h2 {
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+  }
+  .report-panel h2 .panel-head-right { font-size: 10px !important; }
+  .report-panel table { font-size: 10.5px !important; }
+  .report-panel th, .report-panel td { padding: 4px 6px !important; }
+  .report-panel th { font-size: 9px !important; }
+
+  /* Handwriting remarks — keep short */
+  .remarks-handwrite {
+    margin: 6px 8px 8px !important;
+    padding: 6px 8px 4px !important;
+    border-radius: 6px !important;
+    page-break-inside: avoid !important;
+  }
+  .remarks-handwrite strong {
+    font-size: 9px !important;
+    margin-bottom: 4px !important;
+  }
+  .remarks-handwrite .line { height: 18px !important; }
+  .remarks-box {
+    padding: 6px 8px !important;
+    margin-bottom: 6px !important;
+    font-size: 11px !important;
+  }
+  .remarks-box-lg { min-height: 48px !important; }
+
+  /* Images — cap height so they don't force page 2 */
+  .report-images {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+    padding: 6px 8px 8px !important;
+  }
+  .report-image {
+    padding: 4px !important;
+    border-radius: 4px !important;
+    page-break-inside: avoid !important;
+  }
+  .report-image img {
+    max-height: 120px !important;
+    object-fit: contain !important;
+  }
+
+  /* Skin form compact */
+  .skin-form { margin-bottom: 8px !important; page-break-inside: auto !important; }
+  .skin-form > h2 { font-size: 11px !important; padding: 5px 10px !important; }
+  .skin-form .skin-section { padding: 6px 8px 8px !important; }
+  .tick-row, .tick-col { font-size: 11px !important; margin: 2px 0 6px !important; gap: 4px 12px !important; }
+  .write-lines { min-height: 40px !important; padding: 6px 8px !important; font-size: 11px !important; }
+
+  /* Footer — keep side-by-side like preview */
+  .report-footer {
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    gap: 12px !important;
+    font-size: 9px !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .report-footer .footer-note { max-width: 68% !important; line-height: 1.35 !important; }
+  .report-footer .footer-legal { font-size: 8px !important; margin-top: 2px !important; }
+  .sign-box { min-width: 140px !important; font-size: 10px !important; }
+  .sign-line { height: 28px !important; margin-bottom: 3px !important; }
+  .sign-caption { font-size: 8px !important; }
+
+  .report-panel h2.panel-head-split {
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+  .report-panel h2 .panel-head-right { text-align: right !important; }
+
   .report-no-box,
   .remarks-handwrite,
   .species-banner,
@@ -754,10 +889,9 @@ table.data tr:hover td { background: #FFF8FA; }
     print-color-adjust: exact;
   }
   .report-panel tbody tr:nth-child(even) td { background: #f8fafc !important; }
-  .report-images { grid-template-columns: repeat(2, 1fr); }
 }
 
-  @media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .report-sheet, .report-sheet-pro { padding: 18px 14px; }
   .report-topbar { margin: -18px -14px 16px; }
   .report-header { flex-direction: column; }
