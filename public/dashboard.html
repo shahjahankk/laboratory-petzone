@@ -11,6 +11,7 @@
     <a href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg" ></a>
     <nav>
       <span id="userLabel" style="color:var(--gray-500); font-size:14px;"></span>
+      <a href="/templates" class="btn btn-outline btn-sm" id="manageTestsBtn" style="display:none;">Manage Tests</a>
       <a href="/report/new?fresh=1" class="btn btn-pink btn-sm">+ New Report</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
     </nav>
@@ -95,6 +96,9 @@
       const user = await LabApp.requireAuth();
       if (!user) return;
       document.getElementById('userLabel').textContent = user.name;
+      if (user.role === 'admin') {
+        document.getElementById('manageTestsBtn').style.display = '';
+      }
       document.getElementById('logoutBtn').onclick = () => LabApp.logout();
       document.getElementById('searchBtn').onclick = () => loadReports(document.getElementById('search').value.trim());
       document.getElementById('search').addEventListener('keydown', (e) => {

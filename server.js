@@ -66,6 +66,7 @@ async function healthHandler(req, res) {
       tests: fs.existsSync(path.join(publicDir, 'report-tests.html')),
       results: fs.existsSync(path.join(publicDir, 'report-results.html')),
       preview: fs.existsSync(path.join(publicDir, 'report-preview.html')),
+      templatesAdmin: fs.existsSync(path.join(publicDir, 'templates-admin.html')),
       css: fs.existsSync(path.join(publicDir, 'css', 'styles.css')),
       js: fs.existsSync(path.join(publicDir, 'js', 'app.js')),
       logo: fs.existsSync(path.join(publicDir, 'img', 'petzonelogo.png')),
@@ -115,6 +116,7 @@ app.get('/api/static/img/:name', (req, res) => {
 app.get('/', (req, res) => sendPublic(res, 'index.html'));
 app.get('/login', (req, res) => sendPublic(res, 'login.html'));
 app.get('/dashboard', (req, res) => sendPublic(res, 'dashboard.html'));
+app.get('/templates', (req, res) => sendPublic(res, 'templates-admin.html'));
 
 app.get('/report/new/tests', (req, res) => sendPublic(res, 'report-tests.html'));
 app.get('/report/new/results', (req, res) => sendPublic(res, 'report-results.html'));
