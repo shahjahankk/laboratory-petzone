@@ -68,7 +68,7 @@ async function healthHandler(req, res) {
       preview: fs.existsSync(path.join(publicDir, 'report-preview.html')),
       css: fs.existsSync(path.join(publicDir, 'css', 'styles.css')),
       js: fs.existsSync(path.join(publicDir, 'js', 'app.js')),
-      logo: fs.existsSync(path.join(publicDir, 'img', 'petzonelogo.svg')),
+      logo: fs.existsSync(path.join(publicDir, 'img', 'petzonelogo.png')),
     },
     assetsVia: '/api/static/*',
   });
