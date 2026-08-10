@@ -4,19 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=6">
+  <link rel="stylesheet" href="/api/static/styles.css?v=7">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
     tr.param-off { opacity: 0.45; background: #f9fafb; }
     tr.param-off .val { pointer-events: none; background: #f3f4f6; }
-    .results-hint { margin-bottom: 12px; }
-    .results-toolbar {
-      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-      justify-content: space-between; margin-bottom: 14px;
+    .results-hint { margin-bottom: 14px; }
+    .result-block-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: var(--blue); color: #fff; padding: 10px 12px 10px 16px;
     }
+    .result-block-head h3 {
+      margin: 0; background: transparent; padding: 0; font-size: 15px; color: #fff;
+      flex: 1; min-width: 0;
+    }
+    .btn-remove-panel {
+      flex-shrink: 0; border: 1px solid rgba(255,255,255,0.55);
+      background: transparent; color: #fff; padding: 6px 12px; font-size: 12px;
+      border-radius: 8px; cursor: pointer; font-weight: 700;
+    }
+    .btn-remove-panel:hover { background: rgba(255,255,255,0.15); }
+    .add-tests-wrap { margin-top: 16px; }
     .add-tests-panel {
-      display: none; margin-bottom: 16px; padding: 14px;
+      display: none; margin-top: 12px; padding: 14px;
       border: 2px dashed #93c5fd; border-radius: 12px; background: #f8fbff;
     }
     .add-tests-panel.open { display: block; }
@@ -48,28 +59,26 @@
     <div id="alert" class="alert alert-error" style="display:none;"></div>
 
     <div class="card" style="margin-bottom:16px;">
-      <div class="results-toolbar">
-        <div>
-          <p class="hint" id="summary" style="margin:0 0 4px;"></p>
-          <p class="hint results-hint" style="margin:0;">
-            All fields are checked by default. Uncheck any test you are not running.
-          </p>
-        </div>
+      <p class="hint" id="summary" style="margin:0 0 4px;"></p>
+      <p class="hint results-hint">
+        All fields are checked by default. Uncheck any test you are not running. Use Remove to drop a whole panel.
+      </p>
+
+      <div id="resultsArea"><p class="hint">Loading...</p></div>
+
+      <div class="add-tests-wrap">
         <button type="button" class="btn btn-pink btn-sm btn-add-test" id="addTestBtn">
           <span class="plus" aria-hidden="true">+</span> Add test
         </button>
-      </div>
-
-      <div id="addTestsPanel" class="add-tests-panel">
-        <h4>Add another report panel</h4>
-        <p class="hint" style="margin-bottom:10px;">Select a panel to append — current values stay saved.</p>
-        <div class="grid-3" id="extraPanelChecks"></div>
-        <div style="margin-top:10px;">
-          <button type="button" class="btn btn-outline btn-sm" id="closeAddTestsBtn">Close</button>
+        <div id="addTestsPanel" class="add-tests-panel">
+          <h4>Add another report panel</h4>
+          <p class="hint" style="margin-bottom:10px;">Select a panel to append — current values stay saved.</p>
+          <div class="grid-3" id="extraPanelChecks"></div>
+          <div style="margin-top:10px;">
+            <button type="button" class="btn btn-outline btn-sm" id="closeAddTestsBtn">Close</button>
+          </div>
         </div>
       </div>
-
-      <div id="resultsArea"><p class="hint">Loading...</p></div>
     </div>
 
     <div class="wizard-nav">
@@ -78,7 +87,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=6"></script>
+  <script src="/api/static/app.js?v=7"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -140,14 +149,17 @@
       const area = document.getElementById('resultsArea');
 
       if (!selected.length) {
-        area.innerHTML = '<p class="hint">No tests selected. Use <strong>+ Add test</strong> or go back.</p>';
+        area.innerHTML = '<p class="hint">No tests selected. Use <strong>+ Add test</strong> below or go back.</p>';
         renderAddPicker();
         return;
       }
 
       area.innerHTML = selected.map((panel) => `
         <div class="result-block" data-panel-id="${panel.id}">
-          <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+          <div class="result-block-head">
+            <h3>${LabApp.escapeHtml(panel.code)} — ${LabApp.escapeHtml(panel.name)}</h3>
+            <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+          </div>
           <table>
             <thead>
               <tr>
@@ -185,11 +197,9 @@
       const chosen = new Set((LabApp.getDraft().panel_ids || []).map(Number));
       const available = allPanels.filter((p) => !chosen.has(Number(p.id)));
       const box = document.getElementById('extraPanelChecks');
-      const addBtn = document.getElementById('addTestBtn');
 
       if (!available.length) {
         box.innerHTML = '<p class="hint">All available panels are already added.</p>';
-        addBtn.disabled = false;
         return;
       }
 
@@ -209,7 +219,6 @@
       const draft = LabApp.getDraft();
       const ids = [...new Set([...(draft.panel_ids || []).map(Number), Number(panelId)].filter(Boolean))];
       LabApp.saveDraft({ panel_ids: ids });
-      // New panel params default to included via resolveIncludedParameterIds (not in snapshot)
       showAlert('');
       renderResults();
       document.getElementById('addTestsPanel').classList.remove('open');
@@ -218,9 +227,46 @@
       if (block) block.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    function removePanel(panelId) {
+      persistForm();
+      const draft = LabApp.getDraft();
+      const panel = allPanels.find((p) => Number(p.id) === Number(panelId));
+      const paramIds = new Set((panel?.parameters || []).map((x) => Number(x.id)));
+
+      const panel_ids = (draft.panel_ids || []).map(Number).filter((id) => id !== Number(panelId));
+      if (!panel_ids.length) {
+        showAlert('Keep at least one test panel, or go back to select tests.');
+        return;
+      }
+
+      const results = { ...(draft.results || {}) };
+      paramIds.forEach((id) => {
+        delete results[String(id)];
+        delete results[id];
+      });
+
+      let included = Array.isArray(draft.included_parameter_ids)
+        ? draft.included_parameter_ids.map(Number).filter((id) => !paramIds.has(id))
+        : null;
+      let snapshot = (draft.parameter_ids_snapshot || []).map(Number).filter((id) => !paramIds.has(id));
+
+      LabApp.saveDraft({
+        panel_ids,
+        results,
+        included_parameter_ids: included,
+        parameter_ids_snapshot: snapshot,
+      });
+      showAlert('');
+      renderResults();
+    }
+
     function goNext() {
       showAlert('');
       const state = collectState();
+      if (!state.panel_ids.length) {
+        showAlert('Add at least one test panel.');
+        return;
+      }
       if (!state.included_parameter_ids.length) {
         showAlert('Keep at least one field checked to print on the report.');
         return;
@@ -255,6 +301,16 @@
       if (e.target.classList.contains('include')) {
         syncRowState(e.target.closest('tr'));
       }
+    });
+
+    document.getElementById('resultsArea').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-remove-panel]');
+      if (!btn) return;
+      const id = Number(btn.getAttribute('data-remove-panel'));
+      const panel = allPanels.find((p) => Number(p.id) === id);
+      const label = panel ? `${panel.code}` : 'this panel';
+      if (!window.confirm(`Remove ${label} from this report?`)) return;
+      removePanel(id);
     });
 
     (async () => {
