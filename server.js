@@ -91,15 +91,27 @@ app.get('/dashboard', (req, res) => {
 });
 
 app.get('/report/new', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-new.html'));
+  res.sendFile(path.join(publicDir, 'report-patient.html'));
+});
+
+app.get('/report/new/tests', (req, res) => {
+  res.sendFile(path.join(publicDir, 'report-tests.html'));
+});
+
+app.get('/report/new/results', (req, res) => {
+  res.sendFile(path.join(publicDir, 'report-results.html'));
+});
+
+app.get('/report/new/preview', (req, res) => {
+  res.sendFile(path.join(publicDir, 'report-preview.html'));
+});
+
+app.get('/report/:id/edit', (req, res) => {
+  res.redirect(`/report/new?edit=${encodeURIComponent(req.params.id)}`);
 });
 
 app.get('/report/:id', (req, res) => {
   res.sendFile(path.join(publicDir, 'report-print.html'));
-});
-
-app.get('/report/:id/edit', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-new.html'));
 });
 
 app.listen(PORT, () => {

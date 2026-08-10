@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step 2 · Tests — PetZone Laboratory</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <a href="/dashboard"><img src="/img/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/img/petzonelogo.svg'"></a>
+    <nav>
+      <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
+      <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
+    </nav>
+  </header>
+
+  <div class="container" style="max-width:920px;">
+    <h2 style="color:var(--blue);">Select Tests</h2>
+    <p class="hint" style="margin-bottom:16px;">Step 2 of 4 — Choose report panels</p>
+    <div id="stepper"></div>
+    <div id="alert" class="alert alert-error" style="display:none;"></div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div id="patientSummary" class="hint" style="margin-bottom:12px;"></div>
+      <div class="grid-3" id="panelChecks"></div>
+    </div>
+
+    <div class="wizard-nav">
+      <a href="/report/new" class="btn btn-outline">← Back: Patient</a>
+      <button type="button" class="btn btn-primary" id="nextBtn">Next: Enter Results →</button>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (async () => {
+      const user = await LabApp.requireAuth();
+      if (!user) return;
+      const draft = LabApp.guardStep(['patient']);
+      if (!draft) return;
+
+      document.getElementById('logoutBtn').onclick = () => LabApp.logout();
+      document.getElementById('stepper').innerHTML = LabApp.renderStepper(2);
+      document.getElementById('patientSummary').innerHTML =
+        `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> · ${LabApp.escapeHtml(draft.species)} · ${LabApp.escapeHtml(draft.patient_name)}`;
+
+      const tpl = await LabApp.api('/api/templates');
+      const panels = tpl.panels || [];
+      const selected = new Set((draft.panel_ids || []).map(Number));
+
+      const box = document.getElementById('panelChecks');
+      box.innerHTML = panels.map((p) => `
+        <label class="panel-check ${selected.has(p.id) ? 'active' : ''}">
+          <input type="checkbox" value="${p.id}" ${selected.has(p.id) ? 'checked' : ''}>
+          <span>
+            <strong>${LabApp.escapeHtml(p.code)}</strong><br>
+            <small style="color:var(--gray-500)">${LabApp.escapeHtml(p.name)}</small>
+          </span>
+        </label>
+      `).join('');
+
+      box.querySelectorAll('input').forEach((input) => {
+        input.onchange = () => input.closest('.panel-check').classList.toggle('active', input.checked);
+      });
+
+      document.getElementById('nextBtn').onclick = () => {
+        const ids = [...box.querySelectorAll('input:checked')].map((el) => Number(el.value));
+        if (!ids.length) {
+          const alert = document.getElementById('alert');
+          alert.style.display = 'block';
+          alert.textContent = 'Select at least one test';
+          return;
+        }
+        LabApp.saveDraft({ panel_ids: ids });
+        window.location.href = '/report/new/results';
+      };
+    })();
+  </script>
+</body>
+</html>

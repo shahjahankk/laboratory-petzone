@@ -207,6 +207,28 @@ table.data tr:hover td { background: #FFF8FA; }
 .patient-item .muted { color: var(--gray-500); font-size: 12px; margin-top: 4px; }
 .patient-item span { float: right; font-size: 12px; font-weight: 700; color: var(--blue); }
 
+.password-wrap {
+  position: relative;
+}
+.password-wrap input {
+  padding-right: 48px;
+}
+.password-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.password-eye:hover { color: var(--blue); }
+
 /* Print — color + B/W friendly */
 .report-sheet, .report-sheet-pro {
   background: #fff; max-width: 900px; margin: 0 auto;
