@@ -168,6 +168,12 @@
       const params = new URLSearchParams(location.search);
       const editId = params.get('edit');
       const patientQ = params.get('patient');
+      const fresh = params.get('fresh') === '1';
+
+      if (fresh && !editId) {
+        LabApp.clearDraft();
+        LabApp.saveDraft(LabApp.emptyDraft());
+      }
 
       if (editId) {
         const data = await LabApp.api(`/api/reports/${editId}`);
@@ -195,8 +201,7 @@
           panel_ids: (r.panels || []).map((p) => p.id),
           results,
         });
-      } else if (!sessionStorage.getItem(LabApp.draftKey) && !patientQ) {
-        LabApp.clearDraft();
+      } else if (!sessionStorage.getItem(LabApp.draftKey)) {
         LabApp.saveDraft(LabApp.emptyDraft());
       }
 

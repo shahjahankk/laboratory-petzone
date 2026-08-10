@@ -208,26 +208,33 @@ table.data tr:hover td { background: #FFF8FA; }
 .patient-item span { float: right; font-size: 12px; font-weight: 700; color: var(--blue); }
 
 .password-wrap {
-  position: relative;
+  position: relative !important;
+  width: 100%;
 }
 .password-wrap input {
-  padding-right: 48px;
+  padding-right: 52px !important;
 }
-.password-eye {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
+.password-eye,
+#togglePassword {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 36px !important;
+  height: 36px !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--gray-500);
   cursor: pointer;
-  padding: 6px;
-  display: inline-flex;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
-.password-eye:hover { color: var(--blue); }
+#togglePassword:hover { color: var(--blue); }
 
 /* Print — color + B/W friendly */
 .report-sheet, .report-sheet-pro {

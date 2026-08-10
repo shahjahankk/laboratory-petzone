@@ -6,13 +6,21 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-/** Distinct patients/pets from past reports for autofill */
+/** Latest unique patients/pets from past reports for autofill */
 router.get('/', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
     const limit = Math.min(parseInt(req.query.limit || '30', 10) || 30, 100);
 
-    let sql = `
+    let where = '';
+    const params = [];
+    if (q) {
+      where = `WHERE patient_name LIKE ? OR pet_name LIKE ? OR owner_phone LIKE ?`;
+      const like = `%${q}%`;
+      params.push(like, like, like);
+    }
+
+    const sql = `
       SELECT
         r.patient_name,
         r.owner_phone,
@@ -22,30 +30,17 @@ router.get('/', async (req, res) => {
         r.age,
         r.sex,
         r.referring_vet,
-        MAX(r.id) AS last_report_id,
-        MAX(r.report_date) AS last_report_date,
-        COUNT(*) AS visit_count
+        r.id AS last_report_id,
+        r.report_date AS last_report_date,
+        1 AS visit_count
       FROM lab_reports r
-    `;
-    const params = [];
-
-    if (q) {
-      sql += ` WHERE r.patient_name LIKE ? OR r.pet_name LIKE ? OR r.owner_phone LIKE ?`;
-      const like = `%${q}%`;
-      params.push(like, like, like);
-    }
-
-    sql += `
-      GROUP BY
-        r.patient_name,
-        IFNULL(r.owner_phone, ''),
-        r.pet_name,
-        IFNULL(r.species, ''),
-        IFNULL(r.breed, ''),
-        IFNULL(r.age, ''),
-        IFNULL(r.sex, ''),
-        IFNULL(r.referring_vet, '')
-      ORDER BY last_report_id DESC
+      INNER JOIN (
+        SELECT MAX(id) AS id
+        FROM lab_reports
+        ${where}
+        GROUP BY patient_name, pet_name, IFNULL(owner_phone, '')
+      ) latest ON latest.id = r.id
+      ORDER BY r.id DESC
       LIMIT ${limit}
     `;
 

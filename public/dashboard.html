@@ -11,7 +11,7 @@
     <a href="/dashboard"><img src="/img/petzonelogo.png" alt="PetZone" class="logo-lg" onerror="this.src='/img/petzonelogo.svg'"></a>
     <nav>
       <span id="userLabel" style="color:var(--gray-500); font-size:14px;"></span>
-      <a href="/report/new" class="btn btn-pink btn-sm">+ New Report</a>
+      <a href="/report/new?fresh=1" class="btn btn-pink btn-sm">+ New Report</a>
       <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">Logout</button>
     </nav>
   </header>
@@ -79,7 +79,7 @@
               <a class="btn btn-primary btn-sm" href="/report/${r.id}?print=1">Reprint</a>
               <a class="btn btn-outline btn-sm" href="/report/${r.id}">View</a>
               <a class="btn btn-outline btn-sm" href="/report/${r.id}/edit">Edit</a>
-              <a class="btn btn-pink btn-sm" href="/report/new?patient=${patientQ}">New for pet</a>
+              <a class="btn btn-pink btn-sm" href="/report/new?fresh=1&patient=${patientQ}">New for pet</a>
             </td>
           </tr>`;
         }).join('');

@@ -18,6 +18,17 @@ const app = express();
 const PORT = process.env.PORT || 4060;
 const publicDir = path.join(__dirname, 'public');
 
+function sendPublic(res, fileName) {
+  const full = path.join(publicDir, fileName);
+  if (!fs.existsSync(full)) {
+    return res.status(500).json({
+      success: false,
+      message: `Missing file: ${fileName}. Upload the latest public files to cPanel.`,
+    });
+  }
+  return res.sendFile(full);
+}
+
 connectDB().catch((err) => {
   console.error('DB connection failed:', err.message);
 });
@@ -50,11 +61,13 @@ async function healthHandler(req, res) {
     node: process.version,
     database: db,
     ...(dbError ? { dbError } : {}),
-    assets: {
+    files: {
+      patient: fs.existsSync(path.join(publicDir, 'report-patient.html')),
+      tests: fs.existsSync(path.join(publicDir, 'report-tests.html')),
+      results: fs.existsSync(path.join(publicDir, 'report-results.html')),
+      preview: fs.existsSync(path.join(publicDir, 'report-preview.html')),
       css: fs.existsSync(path.join(publicDir, 'css', 'styles.css')),
       js: fs.existsSync(path.join(publicDir, 'js', 'app.js')),
-      logoPng: fs.existsSync(path.join(publicDir, 'img', 'petzonelogo.png')),
-      logoSvg: fs.existsSync(path.join(publicDir, 'img', 'petzonelogo.svg')),
     },
   });
 }
@@ -73,46 +86,34 @@ app.use('/api/templates', templatesRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/patients', patientsRoutes);
 
+// HTML pages BEFORE static — avoids /report/new being treated as report id "new"
+app.get('/', (req, res) => sendPublic(res, 'index.html'));
+app.get('/login', (req, res) => sendPublic(res, 'login.html'));
+app.get('/dashboard', (req, res) => sendPublic(res, 'dashboard.html'));
+
+app.get('/report/new/tests', (req, res) => sendPublic(res, 'report-tests.html'));
+app.get('/report/new/results', (req, res) => sendPublic(res, 'report-results.html'));
+app.get('/report/new/preview', (req, res) => sendPublic(res, 'report-preview.html'));
+app.get('/report/new', (req, res) => sendPublic(res, 'report-patient.html'));
+
+app.get('/report/:id/edit', (req, res) => {
+  if (!/^\d+$/.test(String(req.params.id))) {
+    return res.redirect('/report/new?fresh=1');
+  }
+  return res.redirect(`/report/new?edit=${encodeURIComponent(req.params.id)}`);
+});
+
+app.get('/report/:id', (req, res) => {
+  if (!/^\d+$/.test(String(req.params.id))) {
+    return res.redirect('/report/new?fresh=1');
+  }
+  return sendPublic(res, 'report-print.html');
+});
+
 app.use('/css', express.static(path.join(publicDir, 'css')));
 app.use('/js', express.static(path.join(publicDir, 'js')));
 app.use('/img', express.static(path.join(publicDir, 'img')));
 app.use(express.static(publicDir));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'));
-});
-
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(publicDir, 'login.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(publicDir, 'dashboard.html'));
-});
-
-app.get('/report/new', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-patient.html'));
-});
-
-app.get('/report/new/tests', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-tests.html'));
-});
-
-app.get('/report/new/results', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-results.html'));
-});
-
-app.get('/report/new/preview', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-preview.html'));
-});
-
-app.get('/report/:id/edit', (req, res) => {
-  res.redirect(`/report/new?edit=${encodeURIComponent(req.params.id)}`);
-});
-
-app.get('/report/:id', (req, res) => {
-  res.sendFile(path.join(publicDir, 'report-print.html'));
-});
 
 app.listen(PORT, () => {
   console.log(`PetZone Laboratory running on port ${PORT}`);

@@ -33,11 +33,11 @@
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <div class="password-wrap">
-            <input id="password" name="password" type="password" required minlength="6" placeholder="••••••••" autocomplete="current-password">
-            <button type="button" class="password-eye" id="togglePassword" aria-label="Show password" title="Show password">
-              <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          <div class="password-wrap" style="position:relative; width:100%;">
+            <input id="password" name="password" type="password" required minlength="6" placeholder="••••••••" autocomplete="current-password" style="width:100%; padding-right:52px; box-sizing:border-box;">
+            <button type="button" id="togglePassword" aria-label="Show password" title="Show password"
+              style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:36px; height:36px; border:none; background:transparent; color:#6B7280; cursor:pointer; font-size:18px; line-height:1; padding:0; margin:0; box-shadow:none; outline:none;">
+              <span id="eyeIcon">👁</span>
             </button>
           </div>
         </div>
@@ -97,11 +97,11 @@
 
     document.getElementById('togglePassword').addEventListener('click', () => {
       const input = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
       const btn = document.getElementById('togglePassword');
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      btn.querySelector('.eye-open').style.display = show ? 'none' : 'block';
-      btn.querySelector('.eye-closed').style.display = show ? 'block' : 'none';
+      icon.textContent = show ? '🙈' : '👁';
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
       btn.title = show ? 'Hide password' : 'Show password';
     });
