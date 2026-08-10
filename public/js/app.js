@@ -424,7 +424,7 @@ const LabApp = {
     const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
     const m = (arr, key) => this.mark(has(arr, key));
     const line = (text) => this.escapeHtml(text || '');
-    const blank = (v) => this.escapeHtml(v || '_______________');
+    const blank = (v) => this.escapeHtml(v || '________');
 
     return `
       <section class="skin-form">
@@ -462,12 +462,12 @@ const LabApp = {
         <div class="skin-section">
           <h3>Microscopic Findings</h3>
           <p><strong>Mites:</strong></p>
-          <div class="tick-col">
-            <div>${m(d.mites, 'not_seen')} Not Seen</div>
-            <div>${m(d.mites, 'demodex')} Demodex spp.</div>
-            <div>${m(d.mites, 'sarcoptes')} Sarcoptes spp.</div>
-            <div>${m(d.mites, 'otodectes')} Otodectes spp.</div>
-            <div>${m(d.mites, 'other')} Other: ${blank(d.mites_other)}</div>
+          <div class="tick-row">
+            <span>${m(d.mites, 'not_seen')} Not Seen</span>
+            <span>${m(d.mites, 'demodex')} Demodex spp.</span>
+            <span>${m(d.mites, 'sarcoptes')} Sarcoptes spp.</span>
+            <span>${m(d.mites, 'otodectes')} Otodectes spp.</span>
+            <span>${m(d.mites, 'other')} Other: ${blank(d.mites_other)}</span>
           </div>
           <p><strong>Fungal Elements:</strong></p>
           <div class="tick-row">
@@ -490,22 +490,22 @@ const LabApp = {
             <span>${m(d.yeast, 'other')} Other: ${blank(d.yeast_other)}</span>
           </div>
           <p><strong>Other Findings:</strong></p>
-          <div class="write-lines">${line(d.other_findings) || '&nbsp;<br>&nbsp;<br>&nbsp;'}</div>
+          <div class="write-lines write-lines-sm">${line(d.other_findings) || '&nbsp;<br>&nbsp;'}</div>
         </div>
 
         <div class="skin-section">
           <h3>Result / Impression</h3>
-          <div class="tick-col">
-            <div>${this.mark(d.result === 'negative')} Negative / No significant organisms detected</div>
-            <div>${this.mark(d.result === 'positive')} Positive for: ${blank(d.positive_for)}</div>
+          <div class="tick-row">
+            <span>${this.mark(d.result === 'negative')} Negative / No significant organisms detected</span>
+            <span>${this.mark(d.result === 'positive')} Positive for: ${blank(d.positive_for)}</span>
           </div>
           <p><strong>Final Interpretation:</strong></p>
-          <div class="write-lines">${line(d.interpretation) || '&nbsp;<br>&nbsp;<br>&nbsp;'}</div>
+          <div class="write-lines write-lines-sm">${line(d.interpretation) || '&nbsp;<br>&nbsp;'}</div>
         </div>
 
         <div class="skin-section">
           <h3>Recommendations</h3>
-          <div class="write-lines">${line(d.recommendations) || '&nbsp;<br>&nbsp;<br>&nbsp;'}</div>
+          <div class="write-lines write-lines-sm">${line(d.recommendations) || '&nbsp;<br>&nbsp;'}</div>
         </div>
       </section>
     `;
