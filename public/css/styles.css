@@ -207,6 +207,19 @@ table.data tr:hover td { background: #FFF8FA; }
 .patient-item .muted { color: var(--gray-500); font-size: 12px; margin-top: 4px; }
 .patient-item span { float: right; font-size: 12px; font-weight: 700; color: var(--blue); }
 
+.owner-match {
+  background: #EFF6FF;
+  border: 2px solid var(--blue);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--blue);
+  font-size: 14px;
+}
+
+#petSelect {
+  font-size: 15px;
+}
+
 .password-wrap {
   position: relative !important;
   width: 100%;

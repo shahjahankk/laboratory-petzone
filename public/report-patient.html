@@ -20,15 +20,29 @@
     <p class="hint" style="margin-bottom:16px;">Step 1 of 4 — Patient details</p>
     <div id="stepper"></div>
     <div id="alert" class="alert alert-error" style="display:none;"></div>
+    <div id="okAlert" class="alert alert-ok" style="display:none;"></div>
 
     <div class="card" style="margin-bottom:16px;">
-      <h3 class="section-title">Find existing patient</h3>
+      <h3 class="section-title">Search by phone number</h3>
+      <p class="hint" style="margin-bottom:12px;">
+        Enter phone (e.g. <strong>9231231231</strong>). One number can have many pets — pick a pet or register a new one for the same owner.
+      </p>
       <div class="toolbar">
-        <input id="patientSearch" placeholder="Search owner, pet, or phone..." style="flex:1; min-width:220px;">
+        <input id="patientSearch" placeholder="Phone number..." style="flex:1; min-width:220px;" inputmode="tel">
         <button type="button" class="btn btn-outline btn-sm" id="patientSearchBtn">Search</button>
-        <button type="button" class="btn btn-outline btn-sm" id="clearPatientBtn">New Patient</button>
+        <button type="button" class="btn btn-pink btn-sm" id="registerNewBtn" disabled>Register new pet</button>
+        <button type="button" class="btn btn-outline btn-sm" id="clearPatientBtn">Clear all</button>
       </div>
-      <div id="patientResults" class="patient-list" style="margin-top:12px;"></div>
+
+      <div id="ownerBox" class="owner-match" style="display:none; margin-top:14px;"></div>
+
+      <div class="form-group" style="margin-top:14px; margin-bottom:8px;">
+        <label for="petSelect">Pets on this number</label>
+        <select id="petSelect" disabled>
+          <option value="">Search a phone number first</option>
+        </select>
+      </div>
+      <p class="hint" id="searchHint">No search yet.</p>
     </div>
 
     <div class="card" id="patientForm">
@@ -39,8 +53,8 @@
           <input id="patient_name" name="patient_name" autocomplete="name">
         </div>
         <div class="form-group">
-          <label>Phone</label>
-          <input id="owner_phone" name="owner_phone" autocomplete="tel">
+          <label>Phone *</label>
+          <input id="owner_phone" name="owner_phone" autocomplete="tel" inputmode="tel">
         </div>
         <div class="form-group">
           <label>Referring Vet</label>
@@ -106,11 +120,19 @@
 
   <script src="/js/app.js"></script>
   <script>
+    let lastSearch = null;
+
     function showAlert(msg) {
       const el = document.getElementById('alert');
       el.style.display = msg ? 'block' : 'none';
       el.textContent = msg || '';
       if (msg) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function showOk(msg) {
+      const el = document.getElementById('okAlert');
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg || '';
     }
 
     function val(id) {
@@ -120,7 +142,31 @@
 
     function setVal(id, value) {
       const el = document.getElementById(id);
-      if (el && value != null) el.value = value;
+      if (el) el.value = value == null ? '' : value;
+    }
+
+    function fillOwnerOnly(owner) {
+      setVal('patient_name', owner.patient_name || '');
+      setVal('owner_phone', owner.owner_phone || '');
+      setVal('referring_vet', owner.referring_vet || '');
+      // Pet fields empty for new pet registration
+      setVal('pet_name', '');
+      setVal('species', '');
+      setVal('breed', '');
+      setVal('age', '');
+      setVal('sex', '');
+      setVal('remarks', '');
+    }
+
+    function fillPet(pet) {
+      setVal('patient_name', pet.patient_name || '');
+      setVal('owner_phone', pet.owner_phone || '');
+      setVal('referring_vet', pet.referring_vet || '');
+      setVal('pet_name', pet.pet_name || '');
+      setVal('species', LabApp.normalizeSpecies(pet.species));
+      setVal('breed', pet.breed || '');
+      setVal('age', pet.age || '');
+      setVal('sex', pet.sex || '');
     }
 
     function fillForm(data) {
@@ -132,14 +178,113 @@
       });
     }
 
+    function renderPetDropdown(pets) {
+      const select = document.getElementById('petSelect');
+      if (!pets.length) {
+        select.innerHTML = '<option value="">No pets found for this number</option>';
+        select.disabled = true;
+        return;
+      }
+      select.disabled = false;
+      select.innerHTML =
+        '<option value="">Select a pet...</option>' +
+        pets.map((p, i) => {
+          const label = `${p.pet_name || 'Unnamed'} (${p.species || 'N/A'})${p.breed ? ' · ' + p.breed : ''}`;
+          return `<option value="${i}">${LabApp.escapeHtml(label)}</option>`;
+        }).join('');
+    }
+
+    function renderOwnerBox(owner, petCount) {
+      const box = document.getElementById('ownerBox');
+      if (!owner) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+      }
+      box.style.display = 'block';
+      box.innerHTML = `
+        <strong>Owner found:</strong> ${LabApp.escapeHtml(owner.patient_name || '—')}
+        · Phone: ${LabApp.escapeHtml(owner.owner_phone || '—')}
+        · Pets: ${petCount}
+      `;
+    }
+
+    async function searchByPhone(q = '') {
+      showAlert('');
+      showOk('');
+      const hint = document.getElementById('searchHint');
+      const registerBtn = document.getElementById('registerNewBtn');
+      registerBtn.disabled = true;
+      lastSearch = null;
+
+      if (!q) {
+        hint.textContent = 'Enter a phone number to search.';
+        renderPetDropdown([]);
+        renderOwnerBox(null, 0);
+        return;
+      }
+
+      hint.textContent = 'Searching...';
+      try {
+        const data = await LabApp.api('/api/patients?q=' + encodeURIComponent(q));
+        lastSearch = data;
+
+        if (!data.pets.length) {
+          hint.textContent = 'No record for this phone. Fill details below to register new owner + pet.';
+          renderPetDropdown([]);
+          renderOwnerBox(null, 0);
+          setVal('owner_phone', q);
+          return;
+        }
+
+        const owner = data.owners[0] || {
+          patient_name: data.pets[0].patient_name,
+          owner_phone: data.pets[0].owner_phone,
+          referring_vet: data.pets[0].referring_vet,
+        };
+
+        renderOwnerBox(owner, data.pets.length);
+        renderPetDropdown(data.pets);
+        registerBtn.disabled = false;
+        hint.textContent = `Found ${data.pets.length} pet(s). Select one, or click "Register new pet" for this number.`;
+      } catch (err) {
+        hint.textContent = err.message || 'Search failed';
+        renderPetDropdown([]);
+        renderOwnerBox(null, 0);
+      }
+    }
+
+    function registerNewForNumber() {
+      showAlert('');
+      if (!lastSearch || !lastSearch.pets.length) {
+        showAlert('Search a phone number first');
+        return;
+      }
+      const owner = lastSearch.owners[0] || lastSearch.pets[0];
+      fillOwnerOnly({
+        patient_name: owner.patient_name,
+        owner_phone: owner.owner_phone || document.getElementById('patientSearch').value.trim(),
+        referring_vet: owner.referring_vet,
+      });
+      document.getElementById('petSelect').value = '';
+      document.getElementById('pet_name').focus();
+      showOk('Owner/phone filled. Enter the NEW pet details (name, species, etc.), then Next.');
+    }
+
     function goNext() {
       showAlert('');
+      showOk('');
       const species = LabApp.normalizeSpecies(val('species'));
       const patient_name = val('patient_name');
       const pet_name = val('pet_name');
+      const owner_phone = val('owner_phone');
 
       if (!patient_name || !pet_name) {
         showAlert('Owner name and pet name are required');
+        return;
+      }
+      if (!owner_phone) {
+        showAlert('Phone number is required');
         return;
       }
       if (species !== 'Dog' && species !== 'Cat') {
@@ -149,7 +294,7 @@
 
       LabApp.saveDraft({
         patient_name,
-        owner_phone: val('owner_phone'),
+        owner_phone,
         pet_name,
         species,
         breed: val('breed'),
@@ -162,7 +307,6 @@
         status: val('status') || 'final',
       });
 
-      // Verify draft saved before leaving
       const check = LabApp.getDraft();
       if (!check.patient_name || !check.pet_name || !check.species) {
         showAlert('Could not save patient details. Please try again.');
@@ -172,50 +316,24 @@
       window.location.assign('/report/new/tests');
     }
 
-    async function searchPatients(q = '') {
-      const box = document.getElementById('patientResults');
-      box.innerHTML = '<p class="hint">Searching...</p>';
-      try {
-        const data = await LabApp.api('/api/patients' + (q ? `?q=${encodeURIComponent(q)}` : '?limit=20'));
-        if (!data.patients.length) {
-          box.innerHTML = '<p class="hint">No saved patients. Fill details below.</p>';
-          return;
-        }
-        box.innerHTML = data.patients.map((p, i) => `
-          <button type="button" class="patient-item" data-idx="${i}">
-            <strong>${LabApp.escapeHtml(p.pet_name)}</strong>
-            <span>${LabApp.escapeHtml(p.species || '')}</span>
-            <div class="muted">${LabApp.escapeHtml(p.patient_name)}${p.owner_phone ? ' · ' + LabApp.escapeHtml(p.owner_phone) : ''}</div>
-          </button>
-        `).join('');
-        box.querySelectorAll('.patient-item').forEach((btn) => {
-          btn.onclick = () => {
-            const p = data.patients[Number(btn.dataset.idx)];
-            fillForm({
-              patient_name: p.patient_name || '',
-              owner_phone: p.owner_phone || '',
-              pet_name: p.pet_name || '',
-              species: LabApp.normalizeSpecies(p.species),
-              breed: p.breed || '',
-              age: p.age || '',
-              sex: p.sex || '',
-              referring_vet: p.referring_vet || '',
-            });
-            box.querySelectorAll('.patient-item').forEach((b) => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            showAlert('');
-          };
-        });
-      } catch (err) {
-        box.innerHTML = `<p class="hint">${LabApp.escapeHtml(err.message)}</p>`;
-      }
-    }
-
-    // Bind Next immediately — do not wait for async load
     document.getElementById('nextBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      e.stopPropagation();
       goNext();
+    });
+
+    document.getElementById('petSelect').addEventListener('change', () => {
+      if (!lastSearch || !lastSearch.pets) return;
+      const idx = document.getElementById('petSelect').value;
+      if (idx === '') return;
+      const pet = lastSearch.pets[Number(idx)];
+      if (!pet) return;
+      fillPet(pet);
+      showOk(`Loaded pet: ${pet.pet_name}. You can edit details if needed, then Next.`);
+    });
+
+    document.getElementById('registerNewBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      registerNewForNumber();
     });
 
     (async () => {
@@ -224,9 +342,7 @@
         if (!user) return;
 
         document.getElementById('logoutBtn').onclick = () => LabApp.logout();
-        if (LabApp.renderStepper) {
-          document.getElementById('stepper').innerHTML = LabApp.renderStepper(1);
-        }
+        document.getElementById('stepper').innerHTML = LabApp.renderStepper(1);
 
         const params = new URLSearchParams(location.search);
         const editId = params.get('edit');
@@ -264,18 +380,18 @@
             panel_ids: (r.panels || []).map((p) => p.id),
             results,
           });
-      } else if (!localStorage.getItem(LabApp.draftKey) && !sessionStorage.getItem(LabApp.draftKey)) {
-        LabApp.saveDraft(LabApp.emptyDraft());
-      }
+        } else if (!localStorage.getItem(LabApp.draftKey) && !sessionStorage.getItem(LabApp.draftKey)) {
+          LabApp.saveDraft(LabApp.emptyDraft());
+        }
 
         fillForm(LabApp.getDraft());
 
         document.getElementById('patientSearchBtn').onclick = () =>
-          searchPatients(document.getElementById('patientSearch').value.trim());
+          searchByPhone(document.getElementById('patientSearch').value.trim());
         document.getElementById('patientSearch').addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            searchPatients(e.target.value.trim());
+            searchByPhone(e.target.value.trim());
           }
         });
         document.getElementById('clearPatientBtn').onclick = () => {
@@ -284,14 +400,23 @@
             editId: LabApp.getDraft().editId,
           });
           fillForm(LabApp.getDraft());
-          searchPatients('');
+          lastSearch = null;
+          document.getElementById('patientSearch').value = '';
+          document.getElementById('registerNewBtn').disabled = true;
+          renderPetDropdown([]);
+          renderOwnerBox(null, 0);
+          document.getElementById('searchHint').textContent = 'Cleared. Search a phone number to continue.';
+          showOk('');
+          showAlert('');
         };
 
-        if (patientQ) {
+        // If coming from dashboard with phone/pet query, try phone search
+        if (patientQ && /^\d{7,}$/.test(String(patientQ).replace(/\D/g, ''))) {
           document.getElementById('patientSearch').value = patientQ;
-          await searchPatients(patientQ);
-        } else {
-          await searchPatients('');
+          await searchByPhone(patientQ);
+        } else if (patientQ) {
+          document.getElementById('patientSearch').value = patientQ;
+          await searchByPhone(patientQ);
         }
       } catch (err) {
         showAlert(err.message || 'Page failed to load');

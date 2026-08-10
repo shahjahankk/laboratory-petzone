@@ -38,7 +38,8 @@
       document.title = `${report.report_no} — PetZone Laboratory`;
       document.getElementById('editBtn').href = `/report/${report.id}/edit`;
       document.getElementById('newForPetBtn').href =
-        `/report/new?fresh=1&patient=${encodeURIComponent(report.pet_name || report.patient_name || '')}`;
+        `/report/new?fresh=1&patient=${encodeURIComponent(report.owner_phone || report.pet_name || report.patient_name || '')}`;
+      document.getElementById('newForPetBtn').textContent = 'New pet (same phone)';
 
       const species = report.species === 'Cat' || report.species === 'Dog' ? report.species : (report.species || '');
       const speciesClass = species === 'Cat' ? 'species-cat' : 'species-dog';

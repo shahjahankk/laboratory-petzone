@@ -66,7 +66,7 @@
           return;
         }
         tbody.innerHTML = data.reports.map((r) => {
-          const patientQ = encodeURIComponent(r.pet_name || r.patient_name || '');
+          const patientQ = encodeURIComponent(r.owner_phone || r.pet_name || r.patient_name || '');
           return `
           <tr>
             <td><strong>${LabApp.escapeHtml(r.report_no)}</strong></td>
@@ -79,7 +79,7 @@
               <a class="btn btn-primary btn-sm" href="/report/${r.id}?print=1">Reprint</a>
               <a class="btn btn-outline btn-sm" href="/report/${r.id}">View</a>
               <a class="btn btn-outline btn-sm" href="/report/${r.id}/edit">Edit</a>
-              <a class="btn btn-pink btn-sm" href="/report/new?fresh=1&patient=${patientQ}">New for pet</a>
+              <a class="btn btn-pink btn-sm" href="/report/new?fresh=1&patient=${patientQ}">New pet / same phone</a>
             </td>
           </tr>`;
         }).join('');
