@@ -237,12 +237,12 @@ const LabApp = {
     `;
   },
 
-  renderUltrasoundImagesHtml(images, usForm) {
+  renderUltrasoundImagesInnerHtml(images) {
     const list = Array.isArray(images) ? images : [];
     if (!list.length) return '';
     return `
-      <section class="report-panel">
-        <h2>Ultrasound Images</h2>
+      <div class="us-images-block">
+        <h3 class="us-images-title">Ultrasound Images</h3>
         <div class="report-images">
           ${list.map((img) => `
             <figure class="report-image">
@@ -250,6 +250,23 @@ const LabApp = {
             </figure>
           `).join('')}
         </div>
+      </div>
+    `;
+  },
+
+  renderUltrasoundImagesHtml(images, usForm) {
+    const inner = this.renderUltrasoundImagesInnerHtml(images);
+    if (!inner) return '';
+    return `<section class="report-panel report-panel-us-images">${inner}</section>`;
+  },
+
+  /** Full ultrasound block for print: heading + fields + images (one unit). */
+  renderUltrasoundSectionHtml(usForm, images) {
+    return `
+      <section class="report-panel report-panel-us">
+        ${this.renderUltrasoundHeadingHtml(usForm)}
+        ${this.renderUltrasoundPanelHtml(usForm)}
+        ${this.renderUltrasoundImagesInnerHtml(images)}
       </section>
     `;
   },

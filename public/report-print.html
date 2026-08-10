@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=23">
+  <link rel="stylesheet" href="/api/static/styles.css?v=25">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=23"></script>
+  <script src="/api/static/app.js?v=25"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -49,11 +49,7 @@
         .map((panel) => {
           const isUs = String(panel.code).toUpperCase() === 'ULTRASOUND';
           if (isUs) {
-            return `
-        <section class="report-panel">
-          ${LabApp.renderUltrasoundHeadingHtml(report.forms?.ULTRASOUND)}
-          ${LabApp.renderUltrasoundPanelHtml(report.forms?.ULTRASOUND)}
-        </section>`;
+            return LabApp.renderUltrasoundSectionHtml(report.forms?.ULTRASOUND, report.images || []);
           }
           const rows = panel.results || [];
           if (!rows.length) return '';
@@ -128,8 +124,6 @@
         ${sectionTitleHtml}
         ${panelsHtml}
         ${report.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(report.forms.SKIN_SCRAPING) : ''}
-
-        ${hasUs ? LabApp.renderUltrasoundImagesHtml(report.images || [], report.forms?.ULTRASOUND) : ''}
 
         ${!hasUs && report.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>` : ''}
         ${report.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.remarks)}</div></div>` : ''}

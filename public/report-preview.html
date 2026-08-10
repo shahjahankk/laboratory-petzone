@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4  -  Preview  -  Pet Zone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=23">
+  <link rel="stylesheet" href="/api/static/styles.css?v=25">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=23"></script>
+  <script src="/api/static/app.js?v=25"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -69,11 +69,7 @@
         const code = String(panel.code).toUpperCase();
         if (code === 'SKIN_SCRAPING') return '';
         if (code === 'ULTRASOUND') {
-          return `
-        <section class="report-panel">
-          ${LabApp.renderUltrasoundHeadingHtml(draft.forms?.ULTRASOUND)}
-          ${LabApp.renderUltrasoundPanelHtml(draft.forms?.ULTRASOUND)}
-        </section>`;
+          return LabApp.renderUltrasoundSectionHtml(draft.forms?.ULTRASOUND, draft.images || []);
         }
         const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
         if (!params.length) return '';
@@ -102,11 +98,6 @@
           </table>
         </section>`;
       }).join('') || '';
-
-      const images = draft.images || [];
-      const imagesHtml = hasUs
-        ? LabApp.renderUltrasoundImagesHtml(images, draft.forms?.ULTRASOUND)
-        : '';
 
       const usOnly = hasUs && selected.every((p) => {
         const c = String(p.code).toUpperCase();
@@ -150,7 +141,6 @@
         ${sectionTitleHtml}
         ${panelsHtml}
         ${draft.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING) : ''}
-        ${imagesHtml}
         ${!hasUs && draft.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>` : ''}
         ${draft.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>` : ''}
         <div class="report-footer">
