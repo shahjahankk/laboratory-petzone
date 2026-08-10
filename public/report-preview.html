@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4 · Preview — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=12">
+  <link rel="stylesheet" href="/api/static/styles.css?v=13">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=12"></script>
+  <script src="/api/static/app.js?v=13"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -104,17 +104,9 @@
       }).join('') || '';
 
       const images = draft.images || [];
-      const imagesHtml = images.length ? `
-        <section class="report-panel">
-          <h2>Ultrasound Images</h2>
-          <div class="report-images">
-            ${images.map((img) => `
-              <figure class="report-image">
-                <img src="${LabApp.escapeHtml(img.url)}" alt="${LabApp.escapeHtml(img.original_name || 'Ultrasound')}">
-              </figure>
-            `).join('')}
-          </div>
-        </section>` : '';
+      const imagesHtml = hasUs
+        ? LabApp.renderUltrasoundImagesHtml(images, draft.forms?.ULTRASOUND)
+        : '';
 
       const sectionTitle = hasUs && selected.every((p) => {
         const c = String(p.code).toUpperCase();
@@ -133,11 +125,6 @@
               <div class="sub">Diagnostic Laboratory Report</div>
               <div class="lab-tagline">PetZone Hospital · Veterinary Diagnostics</div>
             </div>
-          </div>
-          <div class="report-no-box">
-            <div class="rn-label">Preview</div>
-            <div class="rn-value">DRAFT</div>
-            <div class="rn-date">${LabApp.escapeHtml(formatDate(draft.report_date))}</div>
           </div>
         </div>
         <div class="report-section-title">Patient Information</div>
@@ -190,7 +177,7 @@
         report_date: draft.report_date || null,
         clinical_notes: draft.clinical_notes || '',
         remarks: draft.remarks,
-        status: draft.status || 'final',
+        status: 'final',
         panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
         image_ids: (draft.images || []).map((img) => Number(img.id)).filter(Boolean),
         forms: draft.forms || {},

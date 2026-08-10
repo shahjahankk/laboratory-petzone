@@ -123,26 +123,34 @@ const LabApp = {
     return { ...this.emptyUltrasound(), ...((d.forms && d.forms.ULTRASOUND) || {}) };
   },
 
-  /** Print/preview: always blank checkboxes so doctor can tick by hand. */
-  renderUltrasoundTypeHtml(_data) {
-    const box = this.mark(false);
-    return `
-      <div class="skin-section us-type-print">
-        <h3>Ultrasound Type</h3>
-        <div class="tick-row">
-          <span>${box} Complete Abdomen</span>
-          <span>${box} Abdominal Focused</span>
-          <span>${box} Urinary Tract</span>
-          <span>${box} Reproductive</span>
-          <span>${box} Pregnancy</span>
-          <span>${box} Thoracic</span>
-          <span>${box} Other: ________</span>
-        </div>
-      </div>
-    `;
+  ultrasoundTypeLabels(data) {
+    const d = { ...this.emptyUltrasound(), ...(data || {}) };
+    const map = {
+      complete_abdomen: 'Complete Abdomen',
+      abdominal_focused: 'Abdominal Focused',
+      urinary: 'Urinary Tract',
+      reproductive: 'Reproductive',
+      pregnancy: 'Pregnancy',
+      thoracic: 'Thoracic',
+    };
+    const labels = [];
+    const types = Array.isArray(d.us_types) ? d.us_types : [];
+    for (const key of types) {
+      if (key === 'other') {
+        const other = String(d.us_type_other || '').trim();
+        labels.push(other ? `Other: ${other}` : 'Other');
+      } else if (map[key]) {
+        labels.push(map[key]);
+      }
+    }
+    return labels;
   },
 
-  /** Empty lined remarks area for handwriting on printed ultrasound report. */
+  formatUltrasoundTypeText(data) {
+    return this.ultrasoundTypeLabels(data).join(' · ');
+  },
+
+  /** Blank lined remarks for handwriting (no checkboxes on print). */
   renderUltrasoundRemarksBlankHtml() {
     return `
       <div class="remarks-handwrite">
@@ -160,9 +168,28 @@ const LabApp = {
   },
 
   renderUltrasoundPanelHtml() {
+    return this.renderUltrasoundRemarksBlankHtml();
+  },
+
+  renderUltrasoundImagesHtml(images, usForm) {
+    const list = Array.isArray(images) ? images : [];
+    const typeText = this.formatUltrasoundTypeText(usForm);
+    if (!list.length && !typeText) return '';
     return `
-      ${this.renderUltrasoundTypeHtml()}
-      ${this.renderUltrasoundRemarksBlankHtml()}
+      <section class="report-panel">
+        <h2 class="panel-head-split">
+          <span class="panel-head-left">Ultrasound Images</span>
+          ${typeText ? `<span class="panel-head-right">${this.escapeHtml(typeText)}</span>` : ''}
+        </h2>
+        ${list.length ? `
+        <div class="report-images">
+          ${list.map((img) => `
+            <figure class="report-image">
+              <img src="${this.escapeHtml(img.url)}" alt="${this.escapeHtml(img.original_name || 'Ultrasound')}">
+            </figure>
+          `).join('')}
+        </div>` : ''}
+      </section>
     `;
   },
 

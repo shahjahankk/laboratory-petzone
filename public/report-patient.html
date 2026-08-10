@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 1 · Patient — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=11">
+  <link rel="stylesheet" href="/api/static/styles.css?v=13">
 </head>
 <body>
   <header class="header">
@@ -98,13 +98,6 @@
           <label>Report Date</label>
           <input type="date" id="report_date" name="report_date">
         </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="status" name="status">
-            <option value="final">Final</option>
-            <option value="draft">Draft</option>
-          </select>
-        </div>
       </div>
       <div class="form-group">
         <label>Remarks</label>
@@ -118,7 +111,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=11"></script>
+  <script src="/api/static/app.js?v=13"></script>
   <script>
     let lastSearch = null;
 
@@ -172,7 +165,7 @@
     function fillForm(data) {
       [
         'patient_name', 'owner_phone', 'referring_vet', 'pet_name', 'species',
-        'breed', 'age', 'sex', 'sample_date', 'report_date', 'status', 'remarks'
+        'breed', 'age', 'sex', 'sample_date', 'report_date', 'remarks'
       ].forEach((k) => {
         if (data[k] != null) setVal(k, data[k]);
       });
@@ -304,7 +297,7 @@
         sample_date: val('sample_date') || LabApp.today(),
         report_date: val('report_date') || LabApp.today(),
         remarks: val('remarks'),
-        status: val('status') || 'final',
+        status: 'final',
       });
 
       const check = LabApp.getDraft();
@@ -379,7 +372,7 @@
             report_date: String(r.report_date || LabApp.today()).slice(0, 10),
             remarks: r.remarks || '',
             clinical_notes: r.clinical_notes || '',
-            status: r.status || 'final',
+            status: 'final',
             panel_ids: (r.panels || []).map((p) => p.id),
             included_parameter_ids: included,
             parameter_ids_snapshot: included,

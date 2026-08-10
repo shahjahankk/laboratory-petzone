@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=12">
+  <link rel="stylesheet" href="/api/static/styles.css?v=13">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=12"></script>
+  <script src="/api/static/app.js?v=13"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -99,12 +99,8 @@
               <h1>PetZone Laboratory</h1>
               <div class="sub">Diagnostic Laboratory Report</div>
               <div class="lab-tagline">PetZone Hospital · Veterinary Diagnostics</div>
+              <div class="report-meta-line">${LabApp.escapeHtml(report.report_no)}${formatDate(report.report_date) ? ` · ${LabApp.escapeHtml(formatDate(report.report_date))}` : ''}</div>
             </div>
-          </div>
-          <div class="report-no-box">
-            <div class="rn-label">Report No</div>
-            <div class="rn-value">${LabApp.escapeHtml(report.report_no)}</div>
-            <div class="rn-date">${LabApp.escapeHtml(formatDate(report.report_date) || '')}</div>
           </div>
         </div>
 
@@ -126,17 +122,7 @@
         ${panelsHtml}
         ${report.forms?.SKIN_SCRAPING ? LabApp.renderSkinScrapingHtml(report.forms.SKIN_SCRAPING) : ''}
 
-        ${(report.images || []).length ? `
-          <section class="report-panel">
-            <h2>Ultrasound Images</h2>
-            <div class="report-images">
-              ${(report.images || []).map((img) => `
-                <figure class="report-image">
-                  <img src="${LabApp.escapeHtml(img.url)}" alt="${LabApp.escapeHtml(img.original_name || 'Ultrasound')}">
-                </figure>
-              `).join('')}
-            </div>
-          </section>` : ''}
+        ${hasUs ? LabApp.renderUltrasoundImagesHtml(report.images || [], report.forms?.ULTRASOUND) : ''}
 
         ${!hasUs && report.clinical_notes ? `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>` : ''}
         ${report.remarks ? `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.remarks)}</div></div>` : ''}

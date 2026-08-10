@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3 · Results — PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=12">
+  <link rel="stylesheet" href="/api/static/styles.css?v=13">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -131,7 +131,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=12"></script>
+  <script src="/api/static/app.js?v=13"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -429,7 +429,7 @@
     function ultrasoundExtraHtml() {
       return `
         <div class="us-extra" id="ultrasoundExtra">
-          <p class="hint" style="margin:0 0 12px;">On the printed report, type boxes stay <strong>unchecked</strong> and <strong>Remarks</strong> is blank so the doctor can fill by pen. Optional ticks here are for staff only and are not printed.</p>
+          <p class="hint" style="margin:0 0 12px;">Tick the ultrasound type(s) below — they appear on the <strong>right of the Images</strong> bar on the printed report (checkboxes are not printed). Remarks stay blank for handwriting.</p>
           <label for="usImageInput">Ultrasound images</label>
           <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each).</p>
           <div class="us-upload-row">
