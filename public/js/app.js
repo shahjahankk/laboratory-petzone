@@ -153,6 +153,7 @@ const LabApp = {
     return {
       us_types: [],
       us_type_other: '',
+      clinical_history: '',
     };
   },
 
@@ -188,6 +189,24 @@ const LabApp = {
     return this.ultrasoundTypeLabels(data).join(' / ');
   },
 
+  /** Single ultrasound title + optional category on the same line. */
+  formatUltrasoundHeading(usForm) {
+    const typeText = this.formatUltrasoundTypeText(usForm);
+    return typeText ? `Ultrasound - ${typeText}` : 'Ultrasound';
+  },
+
+  renderUltrasoundHeadingHtml(usForm, asSplit) {
+    const typeText = this.formatUltrasoundTypeText(usForm);
+    if (asSplit && typeText) {
+      return `
+        <h2 class="panel-head-split">
+          <span class="panel-head-left">Ultrasound</span>
+          <span class="panel-head-right">${this.escapeHtml(typeText)}</span>
+        </h2>`;
+    }
+    return `<h2>${this.escapeHtml(this.formatUltrasoundHeading(usForm))}</h2>`;
+  },
+
   /** Empty lined field for handwriting on printed ultrasound report. */
   renderHandwriteBoxHtml(title, lines = 5) {
     const rows = Array.from({ length: Math.max(2, Number(lines) || 4) })
@@ -201,11 +220,25 @@ const LabApp = {
     `;
   },
 
-  /** Blank ultrasound fields for doctor to fill by hand. */
-  renderUltrasoundPanelHtml() {
+  renderFilledNotesBoxHtml(title, text) {
     return `
-      ${this.renderHandwriteBoxHtml('Name', 2)}
-      ${this.renderHandwriteBoxHtml('Clinical History', 3)}
+      <div class="remarks-handwrite remarks-filled">
+        <strong>${this.escapeHtml(title)}</strong>
+        <div class="remarks-body">${this.escapeHtml(text)}</div>
+      </div>
+    `;
+  },
+
+  /** Clinical History / Indication + blank Result / Impression / Remarks. */
+  renderUltrasoundPanelHtml(usForm) {
+    const us = { ...this.emptyUltrasound(), ...(usForm || {}) };
+    const history = String(us.clinical_history || '').trim();
+    const historyBlock = history
+      ? this.renderFilledNotesBoxHtml('Clinical History / Indication', history)
+      : this.renderHandwriteBoxHtml('Clinical History / Indication', 5);
+
+    return `
+      ${historyBlock}
       ${this.renderHandwriteBoxHtml('Result', 4)}
       ${this.renderHandwriteBoxHtml('Impression', 3)}
       ${this.renderHandwriteBoxHtml('Remarks', 3)}
@@ -214,22 +247,17 @@ const LabApp = {
 
   renderUltrasoundImagesHtml(images, usForm) {
     const list = Array.isArray(images) ? images : [];
-    const typeText = this.formatUltrasoundTypeText(usForm);
-    if (!list.length && !typeText) return '';
+    if (!list.length) return '';
     return `
       <section class="report-panel">
-        <h2 class="panel-head-split">
-          <span class="panel-head-left">Ultrasound Images</span>
-          ${typeText ? `<span class="panel-head-right">${this.escapeHtml(typeText)}</span>` : ''}
-        </h2>
-        ${list.length ? `
+        <h2>Ultrasound Images</h2>
         <div class="report-images">
           ${list.map((img) => `
             <figure class="report-image">
               <img src="${this.escapeHtml(img.url)}" alt="${this.escapeHtml(img.original_name || 'Ultrasound')}">
             </figure>
           `).join('')}
-        </div>` : ''}
+        </div>
       </section>
     `;
   },

@@ -51,15 +51,15 @@
           if (isUs) {
             return `
         <section class="report-panel">
-          <h2>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h2>
-          ${LabApp.renderUltrasoundPanelHtml()}
+          ${LabApp.renderUltrasoundHeadingHtml(report.forms?.ULTRASOUND, true)}
+          ${LabApp.renderUltrasoundPanelHtml(report.forms?.ULTRASOUND)}
         </section>`;
           }
           const rows = panel.results || [];
           if (!rows.length) return '';
           return `
         <section class="report-panel">
-          <h2>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h2>
+          <h2>${LabApp.escapeHtml(panel.name || panel.code)}</h2>
           <table>
             <thead>
               <tr>
@@ -99,7 +99,7 @@
             <img src="/api/static/img/petzonelogo.png" alt="PetZone">
           </div>
           <div class="rh-center">
-            <h1>PetZone Laboratory</h1>
+            <h1>Pet Zone Laboratory</h1>
             <div class="sub">Diagnostic Laboratory Report</div>
           </div>
           <div class="rh-right">

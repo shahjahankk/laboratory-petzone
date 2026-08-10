@@ -19,6 +19,16 @@
       margin: 0; background: transparent; padding: 0; font-size: 15px; color: #fff;
       flex: 1; min-width: 0;
     }
+    .us-panel-title {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: 100%;
+    }
+    .us-panel-title .us-head-cat {
+      font-size: 13px; font-weight: 700; opacity: 0.95; text-align: right;
+    }
+    #usClinicalHistory {
+      width: 100%; min-height: 110px; resize: vertical;
+    }
     .btn-remove-panel {
       flex-shrink: 0; border: 1px solid rgba(255,255,255,0.55);
       background: transparent; color: #fff; padding: 6px 12px; font-size: 12px;
@@ -105,7 +115,7 @@
     <div class="card" style="margin-bottom:16px;">
       <p class="hint" id="summary" style="margin:0 0 4px;"></p>
       <p class="hint results-hint">
-        All fields are checked by default. For Ultrasound, upload images and write doctor remarks below the panel.
+        All fields are checked by default. For Ultrasound, select type, enter Clinical History / Indication, and upload images.
       </p>
 
       <div id="resultsArea"><p class="hint">Loading...</p></div>
@@ -342,8 +352,7 @@
         if (checked) included.push(id);
       });
 
-      const notesEl = document.getElementById('doctorRemarks');
-      const clinical_notes = notesEl ? notesEl.value.trim() : (hasUltrasound() ? '' : (draft.clinical_notes || ''));
+      const clinical_notes = notesEl ? notesEl.value.trim() : (draft.clinical_notes || '');
       const forms = { ...(draft.forms || {}) };
       if (hasSkinScraping()) {
         forms.SKIN_SCRAPING = collectSkinScraping();
@@ -352,6 +361,7 @@
         forms.ULTRASOUND = {
           us_types: collectChecked('us_type'),
           us_type_other: document.getElementById('us_type_other')?.value.trim() || '',
+          clinical_history: document.getElementById('usClinicalHistory')?.value.trim() || '',
         };
       }
 
@@ -426,12 +436,16 @@
       `;
     }
 
-    function ultrasoundExtraHtml() {
+    function ultrasoundExtraHtml(draft) {
+      const us = LabApp.getUltrasound(draft);
       return `
         <div class="us-extra" id="ultrasoundExtra">
-          <p class="hint" style="margin:0 0 12px;">Tick ultrasound type(s) below - they show on the right of the Images bar. Print leaves blank Name, Clinical History, Result, Impression, and Remarks for handwriting.</p>
-          <label for="usImageInput">Ultrasound images</label>
-          <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each).</p>
+          <label for="usClinicalHistory">Clinical History / Indication</label>
+          <p class="hint" style="margin:0 0 8px;">Full clinical history for this scan. Printed on the report (or leave blank for handwriting lines).</p>
+          <textarea id="usClinicalHistory" rows="5" placeholder="Enter clinical history / indication...">${LabApp.escapeHtml(us.clinical_history || '')}</textarea>
+
+          <label for="usImageInput" style="margin-top:16px;">Ultrasound images</label>
+          <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each). Selected type shows on the Ultrasound title line.</p>
           <div class="us-upload-row">
             <input type="file" id="usImageInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
             <button type="button" class="btn btn-primary btn-sm" id="usUploadBtn">Upload</button>
@@ -439,6 +453,19 @@
           <div class="us-images" id="usImages"></div>
         </div>
       `;
+    }
+
+    function syncUltrasoundHeading() {
+      const el = document.getElementById('usPanelTitle');
+      if (!el) return;
+      const us = {
+        us_types: collectChecked('us_type'),
+        us_type_other: document.getElementById('us_type_other')?.value.trim() || '',
+      };
+      const typeText = LabApp.formatUltrasoundTypeText(us);
+      el.innerHTML = typeText
+        ? `<span>Ultrasound</span><span class="us-head-cat">${LabApp.escapeHtml(typeText)}</span>`
+        : '<span>Ultrasound</span>';
     }
 
     function renderResults() {
@@ -464,7 +491,7 @@
           return `
           <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
             <div class="result-block-head">
-              <h3>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h3>
+              <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
               <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
             </div>
             ${skinScrapingFormHtml(LabApp.getSkinScraping(draft))}
@@ -472,21 +499,24 @@
         }
 
         if (isUs) {
+          const typeText = LabApp.formatUltrasoundTypeText(LabApp.getUltrasound(draft));
           return `
           <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
             <div class="result-block-head">
-              <h3>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h3>
+              <h3 id="usPanelTitle" class="us-panel-title">${typeText
+                ? `<span>Ultrasound</span><span class="us-head-cat">${LabApp.escapeHtml(typeText)}</span>`
+                : '<span>Ultrasound</span>'}</h3>
               <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
             </div>
             ${ultrasoundTypeOnlyHtml(draft)}
-            ${ultrasoundExtraHtml()}
+            ${ultrasoundExtraHtml(draft)}
           </div>`;
         }
 
         return `
         <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
           <div class="result-block-head">
-            <h3>${LabApp.escapeHtml(panel.code)} â€” ${LabApp.escapeHtml(panel.name)}</h3>
+            <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
             <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
           </div>
           <table>
@@ -514,7 +544,7 @@
                   </td>
                   <td>${LabApp.escapeHtml(param.name)}</td>
                   <td>${field}</td>
-                  <td>${LabApp.escapeHtml(param.unit || 'â€”')}</td>
+                  <td>${LabApp.escapeHtml(param.unit || '-')}</td>
                   <td>${LabApp.escapeHtml(refFor(param, species))}</td>
                 </tr>`;
               }).join('') || '<tr><td colspan="5" class="hint">No parameters on this panel.</td></tr>'}
@@ -673,6 +703,13 @@
       if (e.target.classList.contains('include')) {
         syncRowState(e.target.closest('tr'));
       }
+      if (e.target.name === 'us_type' || e.target.id === 'us_type_other') {
+        syncUltrasoundHeading();
+      }
+    });
+
+    document.getElementById('resultsArea').addEventListener('input', (e) => {
+      if (e.target.id === 'us_type_other') syncUltrasoundHeading();
     });
 
     document.getElementById('resultsArea').addEventListener('click', async (e) => {
@@ -707,7 +744,7 @@
         document.getElementById('logoutBtn').onclick = () => LabApp.logout();
         document.getElementById('stepper').innerHTML = LabApp.renderStepper(3);
         document.getElementById('summary').innerHTML =
-          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> Â· Species: <strong>${LabApp.escapeHtml(draft.species)}</strong>`;
+          `<strong>${LabApp.escapeHtml(draft.pet_name)}</strong> - Species: <strong>${LabApp.escapeHtml(draft.species)}</strong>`;
 
         const tpl = await LabApp.api('/api/templates');
         allPanels = tpl.panels || [];
