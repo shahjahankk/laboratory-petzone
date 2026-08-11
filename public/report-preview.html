@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4  -  Preview  -  PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=29">
+  <link rel="stylesheet" href="/api/static/styles.css?v=30">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=29"></script>
+  <script src="/api/static/app.js?v=30"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -79,8 +79,9 @@
         }
         const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
         if (!params.length) return;
+        const isChem = code === 'CHEMISTRY';
         bodies.push(`
-        <section class="report-panel">
+        <section class="report-panel${isChem ? ' report-panel-chemistry' : ''}">
           <h2>${LabApp.escapeHtml(panel.name || panel.code)}</h2>
           <table>
             <thead>

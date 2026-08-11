@@ -935,6 +935,74 @@ table.data tr:hover td { background: #FFF8FA; }
     object-fit: contain !important;
   }
 
+  /* Chemistry — dense 28-row table fits one A4 page */
+  .report-panel-chemistry {
+    margin-bottom: 4px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .report-panel-chemistry h2 {
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+  }
+  .report-panel-chemistry table {
+    font-size: 9px !important;
+  }
+  .report-panel-chemistry th,
+  .report-panel-chemistry td {
+    padding: 1.5px 5px !important;
+    line-height: 1.2 !important;
+    vertical-align: middle !important;
+  }
+  .report-panel-chemistry th {
+    font-size: 8px !important;
+    padding: 2px 5px !important;
+  }
+  .report-panel-chemistry .result-val {
+    font-size: 9.5px !important;
+  }
+
+  .report-print-page:has(.report-panel-chemistry) .report-header img {
+    height: 44px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .report-header h1 {
+    font-size: 14px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .report-header .rh-center .sub {
+    font-size: 7px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .meta-cell {
+    padding: 2px 6px !important;
+    font-size: 9.5px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .meta-cell .k {
+    min-width: 78px !important;
+    font-size: 8px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .meta-card {
+    margin-bottom: 4px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .report-section-title {
+    margin: 0 0 2px !important;
+    font-size: 8px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .report-footer {
+    margin-top: 3px !important;
+    padding-top: 3px !important;
+    font-size: 8px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .sign-line {
+    height: 18px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .remarks-box {
+    padding: 4px 6px !important;
+    margin-bottom: 4px !important;
+    font-size: 9.5px !important;
+  }
+  .report-print-page:has(.report-panel-chemistry) .remarks-box-lg {
+    min-height: 28px !important;
+  }
+
   /* Skin form — dense so it fits one page with header + patient + footer */
   .skin-form {
     margin-bottom: 4px !important;
