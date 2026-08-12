@@ -34,10 +34,10 @@
         <div class="form-group">
           <label for="password">Password</label>
           <div class="password-wrap" style="position:relative; width:100%;">
-            <input id="password" name="password" type="password" required minlength="6" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" style="width:100%; padding-right:52px; box-sizing:border-box;">
+            <input id="password" name="password" type="password" required minlength="6" placeholder="••••••••" autocomplete="current-password" style="width:100%; padding-right:52px; box-sizing:border-box;">
             <button type="button" id="togglePassword" aria-label="Show password" title="Show password"
               style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:36px; height:36px; border:none; background:transparent; color:#6B7280; cursor:pointer; font-size:18px; line-height:1; padding:0; margin:0; box-shadow:none; outline:none;">
-              <span id="eyeIcon">ðŸ‘</span>
+              <span id="eyeIcon">Show</span>
             </button>
           </div>
         </div>
@@ -101,7 +101,7 @@
       const btn = document.getElementById('togglePassword');
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      icon.textContent = show ? 'ðŸ™ˆ' : 'ðŸ‘';
+      icon.textContent = show ? 'Hide' : 'Show';
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
       btn.title = show ? 'Hide password' : 'Show password';
     });
