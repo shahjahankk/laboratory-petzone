@@ -269,6 +269,9 @@ const LabApp = {
       us_types: [],
       us_type_other: '',
       clinical_history: '',
+      findings: '',
+      impression: '',
+      recommendations: '',
     };
   },
 
@@ -339,16 +342,16 @@ const LabApp = {
   },
 
   /**
-   * Handwriting fields (exact order/names):
-   * Clinical History / Indication, Ultrasound Findings, Results / Impression, Recommendations
+   * Print fields (exact order/names). Filled text prints as typed;
+   * empty fields still show with handwriting lines.
    */
   renderUltrasoundPanelHtml(usForm) {
     const us = { ...this.emptyUltrasound(), ...(usForm || {}) };
     return `
       ${this.renderFilledNotesBoxHtml('Clinical History / Indication', us.clinical_history, 2)}
-      ${this.renderHandwriteBoxHtml('Ultrasound Findings', 8)}
-      ${this.renderHandwriteBoxHtml('Results / Impression', 4)}
-      ${this.renderHandwriteBoxHtml('Recommendations', 2)}
+      ${this.renderFilledNotesBoxHtml('Ultrasound Findings', us.findings, 8)}
+      ${this.renderFilledNotesBoxHtml('Results / Impression', us.impression, 4)}
+      ${this.renderFilledNotesBoxHtml('Recommendations', us.recommendations, 3)}
     `;
   },
 

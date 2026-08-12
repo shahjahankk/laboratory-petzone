@@ -115,7 +115,7 @@
     <div class="card" style="margin-bottom:16px;">
       <p class="hint" id="summary" style="margin:0 0 4px;"></p>
       <p class="hint results-hint">
-        All fields are checked by default. For Ultrasound, select type, enter Clinical History / Indication, and upload images.
+        All fields are checked by default. For Ultrasound, select type, fill Clinical History / Findings / Impression / Recommendations (empty fields still print blank lines), and upload images.
       </p>
 
       <div id="resultsArea"><p class="hint">Loading...</p></div>
@@ -363,6 +363,9 @@
           us_types: collectChecked('us_type'),
           us_type_other: document.getElementById('us_type_other')?.value.trim() || '',
           clinical_history: document.getElementById('usClinicalHistory')?.value.trim() || '',
+          findings: document.getElementById('usFindings')?.value.trim() || '',
+          impression: document.getElementById('usImpression')?.value.trim() || '',
+          recommendations: document.getElementById('usRecommendations')?.value.trim() || '',
         };
       }
 
@@ -442,8 +445,20 @@
       return `
         <div class="us-extra" id="ultrasoundExtra">
           <label for="usClinicalHistory">Clinical History / Indication</label>
-          <p class="hint" style="margin:0 0 8px;">Full clinical history for this scan. Printed on the report (or leave blank for handwriting lines).</p>
-          <textarea id="usClinicalHistory" rows="5" placeholder="Enter clinical history / indication...">${LabApp.escapeHtml(us.clinical_history || '')}</textarea>
+          <p class="hint" style="margin:0 0 8px;">Printed on the report. Leave blank to show empty handwriting lines.</p>
+          <textarea id="usClinicalHistory" rows="4" placeholder="Enter clinical history / indication...">${LabApp.escapeHtml(us.clinical_history || '')}</textarea>
+
+          <label for="usFindings" style="margin-top:14px;">Ultrasound Findings</label>
+          <p class="hint" style="margin:0 0 8px;">Printed on the report. Leave blank to show empty lines.</p>
+          <textarea id="usFindings" rows="8" placeholder="Enter ultrasound findings...">${LabApp.escapeHtml(us.findings || '')}</textarea>
+
+          <label for="usImpression" style="margin-top:14px;">Results / Impression</label>
+          <p class="hint" style="margin:0 0 8px;">Printed on the report. Leave blank to show empty lines.</p>
+          <textarea id="usImpression" rows="5" placeholder="Enter results / impression...">${LabApp.escapeHtml(us.impression || '')}</textarea>
+
+          <label for="usRecommendations" style="margin-top:14px;">Recommendations</label>
+          <p class="hint" style="margin:0 0 8px;">Printed on the report. Leave blank to show empty lines.</p>
+          <textarea id="usRecommendations" rows="4" placeholder="Enter recommendations...">${LabApp.escapeHtml(us.recommendations || '')}</textarea>
 
           <label for="usImageInput" style="margin-top:16px;">Ultrasound images</label>
           <p class="hint" style="margin:0 0 8px;">Upload JPG/PNG photos of the scan (max 8MB each). Selected type shows on the Ultrasound title line.</p>
