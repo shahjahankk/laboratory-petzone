@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3  -  Results  -  PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=32">
+  <link rel="stylesheet" href="/api/static/styles.css?v=33">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -148,7 +148,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=32"></script>
+  <script src="/api/static/app.js?v=33"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -1157,7 +1157,8 @@
         showAlert('Add at least one test panel.');
         return;
       }
-      if (!state.included_parameter_ids.length && !hasSkinScraping() && !hasUltrasound()) {
+      const hasTablePanel = selectedPanels().some((p) => !LabApp.isFormPanel(p.code));
+      if (hasTablePanel && !state.included_parameter_ids.length) {
         showAlert('Keep at least one field checked to print on the report.');
         return;
       }
