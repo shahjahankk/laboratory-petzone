@@ -169,7 +169,7 @@ const LabApp = {
         </div>
         <div class="rh-center">
           <h1>PetZone Laboratory</h1>
-          <div class="sub">Diagnostic Laboratory Report</div>
+          <div class="sub">${this.escapeHtml(o.subtitle || 'Diagnostic Laboratory Report')}</div>
         </div>
         <div class="rh-right">
           <div class="dt-label">Date &amp; Time</div>
@@ -512,6 +512,487 @@ const LabApp = {
         </div>
       </section>
     `;
+  },
+
+  FORM_PANEL_CODES: ['SKIN_SCRAPING', 'ULTRASOUND', 'BLOOD_PARASITE', 'FNA_CYTOLOGY', 'SURGICAL_CONSENT', 'TRAVEL_CERT'],
+  DOC_PANEL_CODES: ['SURGICAL_CONSENT', 'TRAVEL_CERT'],
+
+  isFormPanel(code) {
+    return this.FORM_PANEL_CODES.includes(String(code || '').toUpperCase());
+  },
+
+  isDocPanel(code) {
+    return this.DOC_PANEL_CODES.includes(String(code || '').toUpperCase());
+  },
+
+  fillLine(value) {
+    const s = String(value == null ? '' : value).trim();
+    if (s) return `<span class="ink">${this.escapeHtml(s)}</span>`;
+    return '<span class="blank-line"></span>';
+  },
+
+  fillBlock(value, minLines) {
+    const s = String(value == null ? '' : value).trim();
+    if (s) {
+      return `<div class="write-lines">${this.escapeHtml(s)}</div>`;
+    }
+    const n = Math.max(2, Number(minLines) || 3);
+    const rows = Array.from({ length: n }).map(() => '<div class="line"></div>').join('');
+    return `<div class="remarks-handwrite doc-blank-block"><div class="remarks-lines">${rows}</div></div>`;
+  },
+
+  emptyBloodParasite() {
+    return {
+      sample: [],
+      smear: [],
+      stain: [],
+      stain_other: '',
+      quality: [],
+      screen: [],
+      parasites: [],
+      parasite_other: '',
+      location: [],
+      extra: [],
+      extra_other: '',
+      result: [],
+      comments: '',
+      examined_by: '',
+    };
+  },
+
+  getBloodParasite(draft) {
+    const d = draft || this.getDraft();
+    const saved = (d.forms && d.forms.BLOOD_PARASITE) || {};
+    return {
+      ...this.emptyBloodParasite(),
+      examined_by: d.referring_vet || '',
+      ...saved,
+    };
+  },
+
+  emptyFna() {
+    return {
+      sample_site: '',
+      sample_type: [],
+      sample_other: '',
+      slides: '',
+      stain: [],
+      stain_other: '',
+      cellularity: [],
+      cell_types: [],
+      cell_other: '',
+      inflam_cells: [],
+      features: [],
+      microbes: [],
+      microbe_other: '',
+      impression: [],
+      comments: '',
+      examined_by: '',
+    };
+  },
+
+  getFna(draft) {
+    const d = draft || this.getDraft();
+    const saved = (d.forms && d.forms.FNA_CYTOLOGY) || {};
+    return {
+      ...this.emptyFna(),
+      examined_by: d.referring_vet || '',
+      ...saved,
+    };
+  },
+
+  emptyConsent() {
+    return {
+      owner_name: '',
+      cnic: '',
+      address: '',
+      contact: '',
+      animal_name: '',
+      species: '',
+      breed: '',
+      sex: '',
+      age: '',
+      color: '',
+      procedure: '',
+      date_of_surgery: '',
+      emergency: '',
+      additional_notes: '',
+      owner_sign_date: '',
+      witness: '',
+      vet_name: '',
+      vet_qualification: '',
+      vet_reg: '',
+      vet_date: '',
+    };
+  },
+
+  getConsent(draft) {
+    const d = draft || this.getDraft();
+    const saved = (d.forms && d.forms.SURGICAL_CONSENT) || {};
+    return {
+      ...this.emptyConsent(),
+      owner_name: d.patient_name || '',
+      contact: d.owner_phone || '',
+      animal_name: d.pet_name || '',
+      species: d.species || '',
+      breed: d.breed || '',
+      sex: d.sex || '',
+      age: d.age || '',
+      date_of_surgery: d.report_date || this.today(),
+      vet_name: d.referring_vet || '',
+      vet_date: d.report_date || this.today(),
+      owner_sign_date: d.report_date || this.today(),
+      ...saved,
+    };
+  },
+
+  emptyTravel() {
+    return {
+      owner_name: '',
+      cnic: '',
+      address: '',
+      contact: '',
+      species: '',
+      breed: '',
+      sex: '',
+      age: '',
+      color: '',
+      microchip: '',
+      vaccination: '',
+      deworming: '',
+      rabies: '',
+      destination: '',
+      transport: '',
+      exam_date: '',
+      remarks: '',
+      vet_name: '',
+      vet_qualification: '',
+      vet_reg: '',
+      issue_date: '',
+    };
+  },
+
+  getTravel(draft) {
+    const d = draft || this.getDraft();
+    const saved = (d.forms && d.forms.TRAVEL_CERT) || {};
+    return {
+      ...this.emptyTravel(),
+      owner_name: d.patient_name || '',
+      contact: d.owner_phone || '',
+      species: d.species || '',
+      breed: d.breed || '',
+      sex: d.sex || '',
+      age: d.age || '',
+      exam_date: d.sample_date || d.report_date || this.today(),
+      vet_name: d.referring_vet || '',
+      issue_date: d.report_date || this.today(),
+      ...saved,
+    };
+  },
+
+  renderBloodParasiteHtml(data) {
+    const d = { ...this.emptyBloodParasite(), ...(data || {}) };
+    const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
+    const m = (arr, key) => this.mark(has(arr, key));
+    return `
+      <section class="skin-form">
+        <h2>BLOOD PARASITE</h2>
+        <div class="skin-section">
+          <p><strong>Sample:</strong>
+            ${m(d.sample, 'edta')} EDTA Blood
+            &nbsp; ${m(d.sample, 'fresh')} Fresh Blood
+          </p>
+          <p><strong>Smear:</strong>
+            ${m(d.smear, 'thin')} Thin Smear
+            &nbsp; ${m(d.smear, 'thick')} Thick Smear
+          </p>
+          <p><strong>Stain:</strong>
+            ${m(d.stain, 'diffquik')} Diff-Quik
+            &nbsp; ${m(d.stain, 'giemsa')} Giemsa
+            &nbsp; ${m(d.stain, 'wright')} Wright-Giemsa
+            &nbsp; ${m(d.stain, 'other')} Other: ${this.fillLine(d.stain_other)}
+          </p>
+          <p><strong>Smear Quality:</strong>
+            ${m(d.quality, 'good')} Good
+            &nbsp; ${m(d.quality, 'adequate')} Adequate
+            &nbsp; ${m(d.quality, 'poor')} Poor
+          </p>
+        </div>
+        <div class="skin-section">
+          <h3>Blood Parasite Screen</h3>
+          <div class="tick-row">
+            <span>${m(d.screen, 'none')} No Blood Parasites Observed</span>
+            <span>${m(d.screen, 'detected')} Blood Parasite Detected / Suspected</span>
+          </div>
+          <p><strong>Parasite:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.parasites, 'babesia')} Babesia spp.</span>
+            <span>${m(d.parasites, 'ehrlichia')} Ehrlichia spp. / Morulae</span>
+            <span>${m(d.parasites, 'anaplasma')} Anaplasma spp. / Morulae</span>
+            <span>${m(d.parasites, 'mycoplasma')} Mycoplasma haemofelis / Hemoplasma</span>
+            <span>${m(d.parasites, 'cytauxzoon')} Cytauxzoon spp.</span>
+            <span>${m(d.parasites, 'hepatozoon')} Hepatozoon spp.</span>
+            <span>${m(d.parasites, 'other')} Other: ${this.fillLine(d.parasite_other)}</span>
+          </div>
+          <p><strong>Location:</strong>
+            ${m(d.location, 'rbc')} RBC
+            &nbsp; ${m(d.location, 'wbc')} WBC
+            &nbsp; ${m(d.location, 'platelet')} Platelet
+            &nbsp; ${m(d.location, 'extra')} Extracellular
+          </p>
+        </div>
+        <div class="skin-section">
+          <h3>Additional Findings</h3>
+          <div class="tick-row">
+            <span>${m(d.extra, 'anemia')} Anemia</span>
+            <span>${m(d.extra, 'polychromasia')} Polychromasia</span>
+            <span>${m(d.extra, 'thrombo')} Thrombocytopenia Suspected</span>
+            <span>${m(d.extra, 'clumping')} Platelet Clumping</span>
+            <span>${m(d.extra, 'leukocyte')} Leukocyte Abnormalities</span>
+            <span>${m(d.extra, 'other')} Other: ${this.fillLine(d.extra_other)}</span>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Final Result</h3>
+          <div class="tick-row">
+            <span>${m(d.result, 'negative')} Negative</span>
+            <span>${m(d.result, 'positive')} Positive</span>
+            <span>${m(d.result, 'suspected')} Suspected — Confirmatory Testing Recommended</span>
+            <span>${m(d.result, 'inconclusive')} Inconclusive</span>
+          </div>
+          <p><strong>Comments:</strong></p>
+          ${this.fillBlock(d.comments, 3)}
+        </div>
+        <div class="skin-section">
+          <div class="doc-grid">
+            <p><strong>Examined By:</strong> ${this.fillLine(d.examined_by)}</p>
+            <p><strong>Signature:</strong> <span class="blank-line wide"></span></p>
+          </div>
+        </div>
+      </section>
+    `;
+  },
+
+  renderFnaHtml(data) {
+    const d = { ...this.emptyFna(), ...(data || {}) };
+    const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
+    const m = (arr, key) => this.mark(has(arr, key));
+    return `
+      <section class="skin-form">
+        <h2>FNA CYTOLOGY</h2>
+        <div class="skin-section">
+          <h3>Sample Details</h3>
+          <p><strong>Site / Lesion:</strong> ${this.fillLine(d.sample_site)}</p>
+          <p><strong>Sample Type:</strong>
+            ${m(d.sample_type, 'fna')} FNA
+            &nbsp; ${m(d.sample_type, 'other')} Other: ${this.fillLine(d.sample_other)}
+          </p>
+          <p><strong>No. of Slides:</strong> ${this.fillLine(d.slides)}</p>
+          <p><strong>Stain:</strong>
+            ${m(d.stain, 'diffquik')} Diff-Quik
+            &nbsp; ${m(d.stain, 'giemsa')} Giemsa
+            &nbsp; ${m(d.stain, 'wright')} Wright-Giemsa
+            &nbsp; ${m(d.stain, 'other')} Other: ${this.fillLine(d.stain_other)}
+          </p>
+        </div>
+        <div class="skin-section">
+          <h3>Cytological Findings</h3>
+          <p><strong>Cellularity:</strong>
+            ${m(d.cellularity, 'none')} None
+            &nbsp; ${m(d.cellularity, 'low')} Low
+            &nbsp; ${m(d.cellularity, 'moderate')} Moderate
+            &nbsp; ${m(d.cellularity, 'high')} High
+          </p>
+          <p><strong>Cell Type:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.cell_types, 'epithelial')} Epithelial</span>
+            <span>${m(d.cell_types, 'mesenchymal')} Mesenchymal</span>
+            <span>${m(d.cell_types, 'round')} Round Cell</span>
+            <span>${m(d.cell_types, 'mixed')} Mixed</span>
+            <span>${m(d.cell_types, 'other')} Other: ${this.fillLine(d.cell_other)}</span>
+          </div>
+          <p><strong>Inflammatory Cells:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.inflam_cells, 'neutrophils')} Neutrophils</span>
+            <span>${m(d.inflam_cells, 'lymphocytes')} Lymphocytes</span>
+            <span>${m(d.inflam_cells, 'macrophages')} Macrophages</span>
+            <span>${m(d.inflam_cells, 'eosinophils')} Eosinophils</span>
+            <span>${m(d.inflam_cells, 'mixed')} Mixed</span>
+          </div>
+          <p><strong>Cellular Features:</strong></p>
+          <div class="tick-row">
+            <span>${m(d.features, 'no_atypia')} No Significant Atypia</span>
+            <span>${m(d.features, 'mild_atypia')} Mild Atypia</span>
+            <span>${m(d.features, 'mod_atypia')} Moderate Atypia</span>
+            <span>${m(d.features, 'marked_atypia')} Marked Atypia</span>
+            <span>${m(d.features, 'anisocytosis')} Anisocytosis</span>
+            <span>${m(d.features, 'anisokaryosis')} Anisokaryosis</span>
+            <span>${m(d.features, 'nc_ratio')} Increased N:C Ratio</span>
+            <span>${m(d.features, 'mitoses')} Abnormal Mitoses</span>
+            <span>${m(d.features, 'necrosis')} Necrosis</span>
+          </div>
+          <p><strong>Microorganisms:</strong>
+            ${m(d.microbes, 'none')} None
+            &nbsp; ${m(d.microbes, 'bacteria')} Bacteria
+            &nbsp; ${m(d.microbes, 'fungi')} Fungi
+            &nbsp; ${m(d.microbes, 'protozoa')} Protozoa
+            &nbsp; ${m(d.microbes, 'other')} Other: ${this.fillLine(d.microbe_other)}
+          </p>
+        </div>
+        <div class="skin-section">
+          <h3>Cytological Impression</h3>
+          <div class="tick-row">
+            <span>${m(d.impression, 'nondiagnostic')} Non-Diagnostic</span>
+            <span>${m(d.impression, 'inflammatory')} Inflammatory</span>
+            <span>${m(d.impression, 'reactive')} Reactive/Hyperplastic</span>
+            <span>${m(d.impression, 'benign')} Benign Neoplasia Suspected</span>
+            <span>${m(d.impression, 'malignant')} Malignant Neoplasia Suspected</span>
+            <span>${m(d.impression, 'inconclusive')} Inconclusive</span>
+          </div>
+          <p><strong>Diagnosis / Comments:</strong></p>
+          ${this.fillBlock(d.comments, 3)}
+        </div>
+        <div class="skin-section">
+          <div class="doc-grid">
+            <p><strong>Examined By:</strong> ${this.fillLine(d.examined_by)}</p>
+            <p><strong>Signature:</strong> <span class="blank-line wide"></span></p>
+          </div>
+        </div>
+      </section>
+    `;
+  },
+
+  renderConsentHtml(data) {
+    const d = { ...this.emptyConsent(), ...(data || {}) };
+    return `
+      <section class="doc-form">
+        <h2>SURGICAL CONSENT FORM</h2>
+        <div class="skin-section">
+          <p class="doc-intro">I, the undersigned owner (or authorized agent) of the animal described below, hereby give my consent to PetZone Veterinary Hospital and its staff to perform the surgical procedure(s) listed.</p>
+          <div class="doc-grid">
+            <p><strong>Owner’s Name:</strong> ${this.fillLine(d.owner_name)}</p>
+            <p><strong>CNIC / Passport No.:</strong> ${this.fillLine(d.cnic)}</p>
+            <p><strong>Address:</strong> ${this.fillLine(d.address)}</p>
+            <p><strong>Contact No.:</strong> ${this.fillLine(d.contact)}</p>
+            <p><strong>Animal Name:</strong> ${this.fillLine(d.animal_name)}</p>
+            <p><strong>Species:</strong> ${this.fillLine(d.species)}</p>
+            <p><strong>Breed:</strong> ${this.fillLine(d.breed)}</p>
+            <p><strong>Sex:</strong> ${this.fillLine(d.sex)}</p>
+            <p><strong>Age:</strong> ${this.fillLine(d.age)}</p>
+            <p><strong>Color / Markings:</strong> ${this.fillLine(d.color)}</p>
+            <p class="doc-span"><strong>Planned Procedure:</strong> ${this.fillLine(d.procedure)}</p>
+            <p><strong>Date of Surgery:</strong> ${this.fillLine(d.date_of_surgery)}</p>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Risks &amp; Responsibilities</h3>
+          <ul class="doc-bullets">
+            <li>I understand that all surgical and anesthetic procedures carry some degree of risk, including but not limited to anesthetic complications, bleeding, infection, or unforeseen reactions.</li>
+            <li>I have been advised of the general nature of the procedure, expected recovery, and possible complications.</li>
+            <li>I understand that pre-anesthetic blood testing, IV fluid therapy, and pain management are recommended to minimize risks.</li>
+            <li>I understand that if my pet is found to have any unforeseen condition during the procedure, the veterinarian will act in the best interest of the animal.</li>
+            <li>I accept financial responsibility for all procedures performed and associated care.</li>
+          </ul>
+          <div class="tick-row">
+            <span>${this.mark(d.emergency === 'yes')} I consent to emergency treatment if required during surgery.</span>
+            <span>${this.mark(d.emergency === 'no')} I do not consent to emergency treatment beyond the stated procedure.</span>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Additional Notes</h3>
+          ${this.fillBlock(d.additional_notes, 4)}
+        </div>
+        <div class="skin-section">
+          <h3>Owner’s Declaration</h3>
+          <p class="doc-intro">I declare that I am the legal owner or authorized agent of the above-mentioned animal. I have read and fully understand the nature of the procedure, the risks involved, and the financial responsibility.</p>
+          <div class="doc-grid">
+            <p><strong>Owner’s Signature:</strong> <span class="blank-line wide"></span></p>
+            <p><strong>Date:</strong> ${this.fillLine(d.owner_sign_date)}</p>
+            <p class="doc-span"><strong>Witness Name &amp; Signature:</strong> ${this.fillLine(d.witness)} <span class="blank-line"></span></p>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Veterinarian Details</h3>
+          <div class="doc-grid">
+            <p><strong>Veterinarian’s Name:</strong> ${this.fillLine(d.vet_name)}</p>
+            <p><strong>Qualification:</strong> ${this.fillLine(d.vet_qualification)}</p>
+            <p><strong>Reg. No.:</strong> ${this.fillLine(d.vet_reg)}</p>
+            <p><strong>Date:</strong> ${this.fillLine(d.vet_date)}</p>
+            <p class="doc-span"><strong>Signature &amp; Stamp:</strong> <span class="blank-line wide"></span></p>
+          </div>
+        </div>
+      </section>
+    `;
+  },
+
+  renderTravelHtml(data) {
+    const d = { ...this.emptyTravel(), ...(data || {}) };
+    return `
+      <section class="doc-form">
+        <h2>ANIMAL HEALTH CERTIFICATE FOR TRAVEL</h2>
+        <div class="skin-section">
+          <p class="doc-intro">This is to certify that the animal described below has been examined by me and was found to be in good health and fit for travel at the time of examination.</p>
+          <div class="doc-grid">
+            <p><strong>Owner’s Name:</strong> ${this.fillLine(d.owner_name)}</p>
+            <p><strong>CNIC / Passport No.:</strong> ${this.fillLine(d.cnic)}</p>
+            <p><strong>Address:</strong> ${this.fillLine(d.address)}</p>
+            <p><strong>Contact No.:</strong> ${this.fillLine(d.contact)}</p>
+            <p><strong>Animal Species:</strong> ${this.fillLine(d.species)}</p>
+            <p><strong>Breed:</strong> ${this.fillLine(d.breed)}</p>
+            <p><strong>Sex:</strong> ${this.fillLine(d.sex)}</p>
+            <p><strong>Age:</strong> ${this.fillLine(d.age)}</p>
+            <p><strong>Color / Markings:</strong> ${this.fillLine(d.color)}</p>
+            <p><strong>Identification / Microchip No.:</strong> ${this.fillLine(d.microchip)}</p>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Health Status</h3>
+          <p class="doc-intro">On clinical examination, the animal showed no signs of contagious or infectious diseases and is fit for travel.</p>
+          <div class="doc-grid">
+            <p><strong>Vaccination Status:</strong> ${this.fillLine(d.vaccination)}</p>
+            <p><strong>Last Deworming:</strong> ${this.fillLine(d.deworming)}</p>
+            <p><strong>Rabies Vaccination:</strong> ${this.fillLine(d.rabies)}</p>
+            <p><strong>Destination:</strong> ${this.fillLine(d.destination)}</p>
+            <p><strong>Mode of Transport:</strong> ${this.fillLine(d.transport)}</p>
+            <p><strong>Date of Examination:</strong> ${this.fillLine(d.exam_date)}</p>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Veterinarian’s Remarks</h3>
+          ${this.fillBlock(d.remarks, 3)}
+        </div>
+        <div class="skin-section">
+          <h3>Veterinarian Details</h3>
+          <div class="doc-grid">
+            <p><strong>Veterinarian’s Name:</strong> ${this.fillLine(d.vet_name)}</p>
+            <p><strong>Qualification:</strong> ${this.fillLine(d.vet_qualification)}</p>
+            <p><strong>Reg. No.:</strong> ${this.fillLine(d.vet_reg)}</p>
+            <p><strong>Date of Issue:</strong> ${this.fillLine(d.issue_date)}</p>
+            <p class="doc-span"><strong>Signature &amp; Stamp:</strong> <span class="blank-line wide"></span></p>
+          </div>
+          <p class="doc-note">This certificate is valid only at the time of issue and as per the travel regulations of the concerned authority.</p>
+        </div>
+      </section>
+    `;
+  },
+
+  renderSpecialPanelHtml(code, draftOrReport) {
+    const c = String(code || '').toUpperCase();
+    const forms = (draftOrReport && draftOrReport.forms) || {};
+    if (c === 'SKIN_SCRAPING') return this.renderSkinScrapingHtml(forms.SKIN_SCRAPING);
+    if (c === 'ULTRASOUND') return this.renderUltrasoundSectionHtml(forms.ULTRASOUND, draftOrReport.images || []);
+    if (c === 'BLOOD_PARASITE') return this.renderBloodParasiteHtml(this.getBloodParasite(draftOrReport));
+    if (c === 'FNA_CYTOLOGY') return this.renderFnaHtml(this.getFna(draftOrReport));
+    if (c === 'SURGICAL_CONSENT') return this.renderConsentHtml(this.getConsent(draftOrReport));
+    if (c === 'TRAVEL_CERT') return this.renderTravelHtml(this.getTravel(draftOrReport));
+    return '';
+  },
+
+  docSubtitle(code) {
+    const c = String(code || '').toUpperCase();
+    if (c === 'SURGICAL_CONSENT') return 'Surgical Consent Form';
+    if (c === 'TRAVEL_CERT') return 'Animal Health Certificate for Travel';
+    return 'Diagnostic Laboratory Report';
   },
 
   getDraft() {

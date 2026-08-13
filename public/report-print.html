@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Print Report  -  PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=30">
+  <link rel="stylesheet" href="/api/static/styles.css?v=32">
 </head>
 <body class="print-page">
   <header class="header no-print">
@@ -22,7 +22,7 @@
     <div id="sheet" class="report-sheet report-sheet-pro">Loading report...</div>
   </div>
 
-  <script src="/api/static/app.js?v=30"></script>
+  <script src="/api/static/app.js?v=32"></script>
   <script>
     function formatDate(value) {
       if (!value) return '';
@@ -54,18 +54,18 @@
       });
 
       const bodies = [];
-      (report.panels || [])
-        .filter((panel) => String(panel.code).toUpperCase() !== 'SKIN_SCRAPING')
-        .forEach((panel) => {
-          const isUs = String(panel.code).toUpperCase() === 'ULTRASOUND';
-          if (isUs) {
-            bodies.push(LabApp.renderUltrasoundSectionHtml(report.forms?.ULTRASOUND, report.images || []));
-            return;
-          }
-          const rows = panel.results || [];
-          if (!rows.length) return;
-          const isChem = String(panel.code).toUpperCase() === 'CHEMISTRY';
-          bodies.push(`
+      (report.panels || []).forEach((panel) => {
+        const code = String(panel.code).toUpperCase();
+        if (LabApp.isFormPanel(code)) {
+          bodies.push({ code, html: LabApp.renderSpecialPanelHtml(code, report) });
+          return;
+        }
+        const rows = panel.results || [];
+        if (!rows.length) return;
+        const isChem = code === 'CHEMISTRY';
+        bodies.push({
+          code,
+          html: `
         <section class="report-panel${isChem ? ' report-panel-chemistry' : ''}">
           <h2>${LabApp.escapeHtml(panel.name || panel.code)}</h2>
           <table>
@@ -88,21 +88,19 @@
               `).join('')}
             </tbody>
           </table>
-        </section>`);
+        </section>`,
         });
-
-      if (report.forms?.SKIN_SCRAPING) {
-        bodies.push(LabApp.renderSkinScrapingHtml(report.forms.SKIN_SCRAPING));
-      }
+      });
 
       if (!bodies.length) {
-        bodies.push('<p class="hint">No test results on this report.</p>');
+        bodies.push({ code: '', html: '<p class="hint">No test results on this report.</p>' });
       }
 
-      const pagesHtml = bodies.map((body, i) => {
+      const pagesHtml = bodies.map((item, i) => {
         const isLast = i === bodies.length - 1;
+        const isDoc = LabApp.isDocPanel(item.code);
         let extra = '';
-        if (isLast) {
+        if (isLast && !isDoc) {
           if (!hasUs && report.clinical_notes) {
             extra += `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.clinical_notes)}</div></div>`;
           }
@@ -110,7 +108,14 @@
             extra += `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(report.remarks)}</div></div>`;
           }
         }
-        return LabApp.wrapReportPrintPage(chrome, body + extra, footer, i === 0);
+        const header = LabApp.renderReportHeaderHtml({
+          dt,
+          report_no: report.report_no,
+          subtitle: isDoc ? LabApp.docSubtitle(item.code) : undefined,
+        });
+        const pageChrome = isDoc ? header : chrome;
+        const pageFooter = isDoc ? '' : footer;
+        return LabApp.wrapReportPrintPage(pageChrome, item.html + extra, pageFooter, i === 0);
       }).join('');
 
       document.getElementById('sheet').innerHTML = pagesHtml;

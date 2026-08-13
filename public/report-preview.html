@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 4  -  Preview  -  PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=30">
+  <link rel="stylesheet" href="/api/static/styles.css?v=32">
 </head>
 <body>
   <header class="header no-print">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=30"></script>
+  <script src="/api/static/app.js?v=32"></script>
   <script>
     function showAlert(msg) {
       const el = document.getElementById('alert');
@@ -72,15 +72,16 @@
       const bodies = [];
       selected.forEach((panel) => {
         const code = String(panel.code).toUpperCase();
-        if (code === 'SKIN_SCRAPING') return;
-        if (code === 'ULTRASOUND') {
-          bodies.push(LabApp.renderUltrasoundSectionHtml(draft.forms?.ULTRASOUND, draft.images || []));
+        if (LabApp.isFormPanel(code)) {
+          bodies.push({ code, html: LabApp.renderSpecialPanelHtml(code, draft) });
           return;
         }
         const params = (panel.parameters || []).filter((param) => included.has(Number(param.id)));
         if (!params.length) return;
         const isChem = code === 'CHEMISTRY';
-        bodies.push(`
+        bodies.push({
+          code,
+          html: `
         <section class="report-panel${isChem ? ' report-panel-chemistry' : ''}">
           <h2>${LabApp.escapeHtml(panel.name || panel.code)}</h2>
           <table>
@@ -106,21 +107,19 @@
               }).join('')}
             </tbody>
           </table>
-        </section>`);
+        </section>`,
+        });
       });
 
-      if (draft.forms?.SKIN_SCRAPING) {
-        bodies.push(LabApp.renderSkinScrapingHtml(draft.forms.SKIN_SCRAPING));
-      }
-
       if (!bodies.length) {
-        bodies.push('<p class="hint">No tests selected for this report.</p>');
+        bodies.push({ code: '', html: '<p class="hint">No tests selected for this report.</p>' });
       }
 
-      const pagesHtml = bodies.map((body, i) => {
+      const pagesHtml = bodies.map((item, i) => {
         const isLast = i === bodies.length - 1;
+        const isDoc = LabApp.isDocPanel(item.code);
         let extra = '';
-        if (isLast) {
+        if (isLast && !isDoc) {
           if (!hasUs && draft.clinical_notes) {
             extra += `<div class="remarks-box remarks-box-lg"><strong>Doctor remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.clinical_notes)}</div></div>`;
           }
@@ -128,7 +127,13 @@
             extra += `<div class="remarks-box"><strong>Remarks</strong><div class="remarks-body">${LabApp.escapeHtml(draft.remarks)}</div></div>`;
           }
         }
-        return LabApp.wrapReportPrintPage(chrome, body + extra, footer, i === 0);
+        const header = LabApp.renderReportHeaderHtml({
+          dt,
+          subtitle: isDoc ? LabApp.docSubtitle(item.code) : undefined,
+        });
+        const pageChrome = isDoc ? header : chrome;
+        const pageFooter = isDoc ? '' : footer;
+        return LabApp.wrapReportPrintPage(pageChrome, item.html + extra, pageFooter, i === 0);
       }).join('');
 
       document.getElementById('sheet').innerHTML = pagesHtml;

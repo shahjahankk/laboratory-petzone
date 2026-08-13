@@ -112,7 +112,12 @@ INSERT INTO lab_test_panels (code, name, description, display_order) VALUES
 ('LIPID', 'Lipid Profile', 'Cholesterol & triglycerides', 5),
 ('GLUCOSE', 'Blood Glucose', 'Glucose estimation', 6),
 ('SKIN_SCRAPING', 'Skin Scraping', 'Dermatology — mites, yeast, fungal & bacteria', 7),
-('ULTRASOUND', 'Ultrasound', 'Diagnostic ultrasound with images & doctor remarks', 8)
+('ULTRASOUND', 'Ultrasound', 'Diagnostic ultrasound with images & doctor remarks', 8),
+('CHEMISTRY', 'Chemistry (Canine / Feline)', 'Comprehensive serum chemistry for Dog and Cat', 9),
+('BLOOD_PARASITE', 'Blood Parasite', 'Blood smear — haemoparasites', 10),
+('FNA_CYTOLOGY', 'FNA Cytology', 'Fine needle aspirate cytology', 11),
+('SURGICAL_CONSENT', 'Surgical Consent Form', 'Editable surgical consent', 12),
+('TRAVEL_CERT', 'Travel Health Certificate', 'Animal health certificate for travel', 13)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO lab_test_parameters (panel_id, code, name, unit, reference_range_dog, reference_range_cat, reference_range, display_order)
@@ -220,6 +225,18 @@ JOIN (
   SELECT 'IMPRESSION', 'Impression', '', '—', '—', 3
 ) x ON p.code = 'ULTRASOUND'
 WHERE NOT EXISTS (SELECT 1 FROM lab_test_parameters tp WHERE tp.panel_id = p.id AND tp.code = x.code);
+
+INSERT INTO lab_test_parameters (panel_id, code, name, unit, reference_range_dog, reference_range_cat, reference_range, display_order)
+SELECT p.id, 'FINDINGS', 'Findings', '', '—', '—', '—', 1
+FROM lab_test_panels p
+WHERE p.code IN ('BLOOD_PARASITE', 'FNA_CYTOLOGY')
+  AND NOT EXISTS (SELECT 1 FROM lab_test_parameters tp WHERE tp.panel_id = p.id AND tp.code = 'FINDINGS');
+
+INSERT INTO lab_test_parameters (panel_id, code, name, unit, reference_range_dog, reference_range_cat, reference_range, display_order)
+SELECT p.id, 'NOTES', 'Notes', '', '—', '—', '—', 1
+FROM lab_test_panels p
+WHERE p.code IN ('SURGICAL_CONSENT', 'TRAVEL_CERT')
+  AND NOT EXISTS (SELECT 1 FROM lab_test_parameters tp WHERE tp.panel_id = p.id AND tp.code = 'NOTES');
 
 CREATE TABLE IF NOT EXISTS lab_report_images (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

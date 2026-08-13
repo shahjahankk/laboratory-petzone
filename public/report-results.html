@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step 3  -  Results  -  PetZone Laboratory</title>
-  <link rel="stylesheet" href="/api/static/styles.css?v=30">
+  <link rel="stylesheet" href="/api/static/styles.css?v=32">
   <style>
     .include-col { width: 56px; text-align: center; }
     .include-col input { width: auto; margin: 0; }
@@ -69,7 +69,14 @@
       background: rgba(153,27,27,0.9); color: #fff; font-size: 11px; padding: 4px 8px; cursor: pointer;
     }
     .us-upload-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
-    .skin-editor { padding: 16px; background: #fafbfc; }
+    .doc-edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 14px;
+    }
+    @media (max-width: 700px) {
+      .doc-edit-grid { grid-template-columns: 1fr; }
+    }
     .skin-editor h4 {
       margin: 18px 0 10px; color: var(--blue); font-size: 14px; text-transform: uppercase;
       letter-spacing: 0.04em; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;
@@ -141,7 +148,7 @@
     </div>
   </div>
 
-  <script src="/api/static/app.js?v=30"></script>
+  <script src="/api/static/app.js?v=32"></script>
   <script>
     let allPanels = [];
     let species = 'Dog';
@@ -338,6 +345,426 @@
       `;
     }
 
+    function bloodParasiteFormHtml(data) {
+      const d = { ...LabApp.emptyBloodParasite(), ...(data || {}) };
+      const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
+      return `
+        <div class="skin-editor" id="bloodParasiteForm">
+          <p class="hint" style="margin-top:0;">Tick boxes like the paper form. Leave comments blank to print handwriting lines. Signature always prints blank.</p>
+          <h4>Sample</h4>
+          <div class="field-row">
+            <label class="main-label">Sample</label>
+            <div class="tick-grid">
+              ${tick('bp_sample', 'edta', 'EDTA Blood', on(d.sample, 'edta'))}
+              ${tick('bp_sample', 'fresh', 'Fresh Blood', on(d.sample, 'fresh'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Smear</label>
+            <div class="tick-grid">
+              ${tick('bp_smear', 'thin', 'Thin Smear', on(d.smear, 'thin'))}
+              ${tick('bp_smear', 'thick', 'Thick Smear', on(d.smear, 'thick'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Stain</label>
+            <div class="tick-grid">
+              ${tick('bp_stain', 'diffquik', 'Diff-Quik', on(d.stain, 'diffquik'))}
+              ${tick('bp_stain', 'giemsa', 'Giemsa', on(d.stain, 'giemsa'))}
+              ${tick('bp_stain', 'wright', 'Wright-Giemsa', on(d.stain, 'wright'))}
+              <label class="inline-other">
+                <input type="checkbox" name="bp_stain" value="other" ${on(d.stain, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="bp_stain_other" value="${LabApp.escapeHtml(d.stain_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Smear Quality</label>
+            <div class="tick-grid">
+              ${tick('bp_quality', 'good', 'Good', on(d.quality, 'good'))}
+              ${tick('bp_quality', 'adequate', 'Adequate', on(d.quality, 'adequate'))}
+              ${tick('bp_quality', 'poor', 'Poor', on(d.quality, 'poor'))}
+            </div>
+          </div>
+          <h4>Blood Parasite Screen</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              ${tick('bp_screen', 'none', 'No Blood Parasites Observed', on(d.screen, 'none'))}
+              ${tick('bp_screen', 'detected', 'Blood Parasite Detected / Suspected', on(d.screen, 'detected'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Parasite</label>
+            <div class="tick-grid">
+              ${tick('bp_parasite', 'babesia', 'Babesia spp.', on(d.parasites, 'babesia'))}
+              ${tick('bp_parasite', 'ehrlichia', 'Ehrlichia spp. / Morulae', on(d.parasites, 'ehrlichia'))}
+              ${tick('bp_parasite', 'anaplasma', 'Anaplasma spp. / Morulae', on(d.parasites, 'anaplasma'))}
+              ${tick('bp_parasite', 'mycoplasma', 'Mycoplasma haemofelis / Hemoplasma', on(d.parasites, 'mycoplasma'))}
+              ${tick('bp_parasite', 'cytauxzoon', 'Cytauxzoon spp.', on(d.parasites, 'cytauxzoon'))}
+              ${tick('bp_parasite', 'hepatozoon', 'Hepatozoon spp.', on(d.parasites, 'hepatozoon'))}
+              <label class="inline-other">
+                <input type="checkbox" name="bp_parasite" value="other" ${on(d.parasites, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="bp_parasite_other" value="${LabApp.escapeHtml(d.parasite_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Location</label>
+            <div class="tick-grid">
+              ${tick('bp_location', 'rbc', 'RBC', on(d.location, 'rbc'))}
+              ${tick('bp_location', 'wbc', 'WBC', on(d.location, 'wbc'))}
+              ${tick('bp_location', 'platelet', 'Platelet', on(d.location, 'platelet'))}
+              ${tick('bp_location', 'extra', 'Extracellular', on(d.location, 'extra'))}
+            </div>
+          </div>
+          <h4>Additional Findings</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              ${tick('bp_extra', 'anemia', 'Anemia', on(d.extra, 'anemia'))}
+              ${tick('bp_extra', 'polychromasia', 'Polychromasia', on(d.extra, 'polychromasia'))}
+              ${tick('bp_extra', 'thrombo', 'Thrombocytopenia Suspected', on(d.extra, 'thrombo'))}
+              ${tick('bp_extra', 'clumping', 'Platelet Clumping', on(d.extra, 'clumping'))}
+              ${tick('bp_extra', 'leukocyte', 'Leukocyte Abnormalities', on(d.extra, 'leukocyte'))}
+              <label class="inline-other">
+                <input type="checkbox" name="bp_extra" value="other" ${on(d.extra, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="bp_extra_other" value="${LabApp.escapeHtml(d.extra_other)}">
+              </label>
+            </div>
+          </div>
+          <h4>Final Result</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              ${tick('bp_result', 'negative', 'Negative', on(d.result, 'negative'))}
+              ${tick('bp_result', 'positive', 'Positive', on(d.result, 'positive'))}
+              ${tick('bp_result', 'suspected', 'Suspected — Confirmatory Testing Recommended', on(d.result, 'suspected'))}
+              ${tick('bp_result', 'inconclusive', 'Inconclusive', on(d.result, 'inconclusive'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="bp_comments">Comments</label>
+            <textarea id="bp_comments" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.comments)}</textarea>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="bp_examined_by">Examined By</label>
+            <input type="text" id="bp_examined_by" value="${LabApp.escapeHtml(d.examined_by)}" placeholder="Leave blank to handwrite">
+          </div>
+        </div>
+      `;
+    }
+
+    function fnaFormHtml(data) {
+      const d = { ...LabApp.emptyFna(), ...(data || {}) };
+      const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
+      return `
+        <div class="skin-editor" id="fnaForm">
+          <p class="hint" style="margin-top:0;">Tick boxes like the paper form. Leave comments blank to print handwriting lines. Signature always prints blank.</p>
+          <h4>Sample Details</h4>
+          <div class="field-row">
+            <label class="main-label" for="fna_sample_site">Site / Lesion</label>
+            <input type="text" id="fna_sample_site" value="${LabApp.escapeHtml(d.sample_site)}" placeholder="Leave blank to handwrite">
+          </div>
+          <div class="field-row">
+            <label class="main-label">Sample Type</label>
+            <div class="tick-grid">
+              ${tick('fna_type', 'fna', 'FNA', on(d.sample_type, 'fna'))}
+              <label class="inline-other">
+                <input type="checkbox" name="fna_type" value="other" ${on(d.sample_type, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="fna_sample_other" value="${LabApp.escapeHtml(d.sample_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="fna_slides">No. of Slides</label>
+            <input type="text" id="fna_slides" value="${LabApp.escapeHtml(d.slides)}" placeholder="Leave blank to handwrite">
+          </div>
+          <div class="field-row">
+            <label class="main-label">Stain</label>
+            <div class="tick-grid">
+              ${tick('fna_stain', 'diffquik', 'Diff-Quik', on(d.stain, 'diffquik'))}
+              ${tick('fna_stain', 'giemsa', 'Giemsa', on(d.stain, 'giemsa'))}
+              ${tick('fna_stain', 'wright', 'Wright-Giemsa', on(d.stain, 'wright'))}
+              <label class="inline-other">
+                <input type="checkbox" name="fna_stain" value="other" ${on(d.stain, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="fna_stain_other" value="${LabApp.escapeHtml(d.stain_other)}">
+              </label>
+            </div>
+          </div>
+          <h4>Cytological Findings</h4>
+          <div class="field-row">
+            <label class="main-label">Cellularity</label>
+            <div class="tick-grid">
+              ${tick('fna_cellu', 'none', 'None', on(d.cellularity, 'none'))}
+              ${tick('fna_cellu', 'low', 'Low', on(d.cellularity, 'low'))}
+              ${tick('fna_cellu', 'moderate', 'Moderate', on(d.cellularity, 'moderate'))}
+              ${tick('fna_cellu', 'high', 'High', on(d.cellularity, 'high'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Cell Type</label>
+            <div class="tick-grid">
+              ${tick('fna_cell', 'epithelial', 'Epithelial', on(d.cell_types, 'epithelial'))}
+              ${tick('fna_cell', 'mesenchymal', 'Mesenchymal', on(d.cell_types, 'mesenchymal'))}
+              ${tick('fna_cell', 'round', 'Round Cell', on(d.cell_types, 'round'))}
+              ${tick('fna_cell', 'mixed', 'Mixed', on(d.cell_types, 'mixed'))}
+              <label class="inline-other">
+                <input type="checkbox" name="fna_cell" value="other" ${on(d.cell_types, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="fna_cell_other" value="${LabApp.escapeHtml(d.cell_other)}">
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Inflammatory Cells</label>
+            <div class="tick-grid">
+              ${tick('fna_inflam', 'neutrophils', 'Neutrophils', on(d.inflam_cells, 'neutrophils'))}
+              ${tick('fna_inflam', 'lymphocytes', 'Lymphocytes', on(d.inflam_cells, 'lymphocytes'))}
+              ${tick('fna_inflam', 'macrophages', 'Macrophages', on(d.inflam_cells, 'macrophages'))}
+              ${tick('fna_inflam', 'eosinophils', 'Eosinophils', on(d.inflam_cells, 'eosinophils'))}
+              ${tick('fna_inflam', 'mixed', 'Mixed', on(d.inflam_cells, 'mixed'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Cellular Features</label>
+            <div class="tick-grid">
+              ${tick('fna_feat', 'no_atypia', 'No Significant Atypia', on(d.features, 'no_atypia'))}
+              ${tick('fna_feat', 'mild_atypia', 'Mild Atypia', on(d.features, 'mild_atypia'))}
+              ${tick('fna_feat', 'mod_atypia', 'Moderate Atypia', on(d.features, 'mod_atypia'))}
+              ${tick('fna_feat', 'marked_atypia', 'Marked Atypia', on(d.features, 'marked_atypia'))}
+              ${tick('fna_feat', 'anisocytosis', 'Anisocytosis', on(d.features, 'anisocytosis'))}
+              ${tick('fna_feat', 'anisokaryosis', 'Anisokaryosis', on(d.features, 'anisokaryosis'))}
+              ${tick('fna_feat', 'nc_ratio', 'Increased N:C Ratio', on(d.features, 'nc_ratio'))}
+              ${tick('fna_feat', 'mitoses', 'Abnormal Mitoses', on(d.features, 'mitoses'))}
+              ${tick('fna_feat', 'necrosis', 'Necrosis', on(d.features, 'necrosis'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Microorganisms</label>
+            <div class="tick-grid">
+              ${tick('fna_micro', 'none', 'None', on(d.microbes, 'none'))}
+              ${tick('fna_micro', 'bacteria', 'Bacteria', on(d.microbes, 'bacteria'))}
+              ${tick('fna_micro', 'fungi', 'Fungi', on(d.microbes, 'fungi'))}
+              ${tick('fna_micro', 'protozoa', 'Protozoa', on(d.microbes, 'protozoa'))}
+              <label class="inline-other">
+                <input type="checkbox" name="fna_micro" value="other" ${on(d.microbes, 'other') ? 'checked' : ''}> Other:
+                <input type="text" id="fna_microbe_other" value="${LabApp.escapeHtml(d.microbe_other)}">
+              </label>
+            </div>
+          </div>
+          <h4>Cytological Impression</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              ${tick('fna_imp', 'nondiagnostic', 'Non-Diagnostic', on(d.impression, 'nondiagnostic'))}
+              ${tick('fna_imp', 'inflammatory', 'Inflammatory', on(d.impression, 'inflammatory'))}
+              ${tick('fna_imp', 'reactive', 'Reactive/Hyperplastic', on(d.impression, 'reactive'))}
+              ${tick('fna_imp', 'benign', 'Benign Neoplasia Suspected', on(d.impression, 'benign'))}
+              ${tick('fna_imp', 'malignant', 'Malignant Neoplasia Suspected', on(d.impression, 'malignant'))}
+              ${tick('fna_imp', 'inconclusive', 'Inconclusive', on(d.impression, 'inconclusive'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="fna_comments">Diagnosis / Comments</label>
+            <textarea id="fna_comments" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.comments)}</textarea>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="fna_examined_by">Examined By</label>
+            <input type="text" id="fna_examined_by" value="${LabApp.escapeHtml(d.examined_by)}" placeholder="Leave blank to handwrite">
+          </div>
+        </div>
+      `;
+    }
+
+    function field(id, label, value, placeholder) {
+      return `
+        <div class="field-row">
+          <label class="main-label" for="${id}">${label}</label>
+          <input type="text" id="${id}" value="${LabApp.escapeHtml(value || '')}" placeholder="${placeholder || 'Leave blank to handwrite'}">
+        </div>`;
+    }
+
+    function consentFormHtml(data) {
+      const d = { ...LabApp.emptyConsent(), ...(data || {}) };
+      return `
+        <div class="skin-editor" id="consentForm">
+          <p class="hint" style="margin-top:0;">Patient details are filled from the report. Clear a field to print a blank line for handwriting. Signatures always print blank.</p>
+          <h4>Owner &amp; Animal</h4>
+          <div class="doc-edit-grid">
+            ${field('sc_owner_name', "Owner's Name", d.owner_name)}
+            ${field('sc_cnic', 'CNIC / Passport No.', d.cnic)}
+            ${field('sc_address', 'Address', d.address)}
+            ${field('sc_contact', 'Contact No.', d.contact)}
+            ${field('sc_animal_name', 'Animal Name', d.animal_name)}
+            ${field('sc_species', 'Species', d.species)}
+            ${field('sc_breed', 'Breed', d.breed)}
+            ${field('sc_sex', 'Sex', d.sex)}
+            ${field('sc_age', 'Age', d.age)}
+            ${field('sc_color', 'Color / Markings', d.color)}
+            ${field('sc_procedure', 'Planned Procedure', d.procedure, 'e.g. OVH, castration, mass removal')}
+            ${field('sc_date_of_surgery', 'Date of Surgery', d.date_of_surgery)}
+          </div>
+          <h4>Emergency treatment</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              <label><input type="radio" name="sc_emergency" value="yes" ${d.emergency === 'yes' ? 'checked' : ''}> I consent to emergency treatment if required during surgery</label>
+              <label><input type="radio" name="sc_emergency" value="no" ${d.emergency === 'no' ? 'checked' : ''}> I do not consent to emergency treatment beyond the stated procedure</label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="sc_additional_notes">Additional Notes</label>
+            <textarea id="sc_additional_notes" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.additional_notes)}</textarea>
+          </div>
+          <h4>Owner / Veterinarian (printed)</h4>
+          <div class="doc-edit-grid">
+            ${field('sc_owner_sign_date', 'Owner sign date', d.owner_sign_date)}
+            ${field('sc_witness', 'Witness name', d.witness)}
+            ${field('sc_vet_name', "Veterinarian's Name", d.vet_name)}
+            ${field('sc_vet_qualification', 'Qualification', d.vet_qualification)}
+            ${field('sc_vet_reg', 'Reg. No.', d.vet_reg)}
+            ${field('sc_vet_date', 'Vet date', d.vet_date)}
+          </div>
+        </div>
+      `;
+    }
+
+    function travelFormHtml(data) {
+      const d = { ...LabApp.emptyTravel(), ...(data || {}) };
+      return `
+        <div class="skin-editor" id="travelForm">
+          <p class="hint" style="margin-top:0;">Patient details are filled from the report. Clear a field to print a blank line for handwriting. Signature/stamp always print blank.</p>
+          <h4>Owner &amp; Animal</h4>
+          <div class="doc-edit-grid">
+            ${field('tc_owner_name', "Owner's Name", d.owner_name)}
+            ${field('tc_cnic', 'CNIC / Passport No.', d.cnic)}
+            ${field('tc_address', 'Address', d.address)}
+            ${field('tc_contact', 'Contact No.', d.contact)}
+            ${field('tc_species', 'Species', d.species)}
+            ${field('tc_breed', 'Breed', d.breed)}
+            ${field('tc_sex', 'Sex', d.sex)}
+            ${field('tc_age', 'Age', d.age)}
+            ${field('tc_color', 'Color / Markings', d.color)}
+            ${field('tc_microchip', 'Identification / Microchip No.', d.microchip)}
+          </div>
+          <h4>Health &amp; Travel</h4>
+          <div class="doc-edit-grid">
+            ${field('tc_vaccination', 'Vaccination Status', d.vaccination)}
+            ${field('tc_deworming', 'Last Deworming', d.deworming)}
+            ${field('tc_rabies', 'Rabies Vaccination', d.rabies)}
+            ${field('tc_destination', 'Destination', d.destination)}
+            ${field('tc_transport', 'Mode of Transport', d.transport)}
+            ${field('tc_exam_date', 'Date of Examination', d.exam_date)}
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="tc_remarks">Veterinarian’s Remarks</label>
+            <textarea id="tc_remarks" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.remarks)}</textarea>
+          </div>
+          <h4>Veterinarian</h4>
+          <div class="doc-edit-grid">
+            ${field('tc_vet_name', "Veterinarian's Name", d.vet_name)}
+            ${field('tc_vet_qualification', 'Qualification', d.vet_qualification)}
+            ${field('tc_vet_reg', 'Reg. No.', d.vet_reg)}
+            ${field('tc_issue_date', 'Date of Issue', d.issue_date)}
+          </div>
+        </div>
+      `;
+    }
+
+    function collectBloodParasite() {
+      if (!document.getElementById('bloodParasiteForm')) return LabApp.getBloodParasite();
+      return {
+        sample: collectChecked('bp_sample'),
+        smear: collectChecked('bp_smear'),
+        stain: collectChecked('bp_stain'),
+        stain_other: document.getElementById('bp_stain_other')?.value.trim() || '',
+        quality: collectChecked('bp_quality'),
+        screen: collectChecked('bp_screen'),
+        parasites: collectChecked('bp_parasite'),
+        parasite_other: document.getElementById('bp_parasite_other')?.value.trim() || '',
+        location: collectChecked('bp_location'),
+        extra: collectChecked('bp_extra'),
+        extra_other: document.getElementById('bp_extra_other')?.value.trim() || '',
+        result: collectChecked('bp_result'),
+        comments: document.getElementById('bp_comments')?.value.trim() || '',
+        examined_by: document.getElementById('bp_examined_by')?.value.trim() || '',
+      };
+    }
+
+    function collectFna() {
+      if (!document.getElementById('fnaForm')) return LabApp.getFna();
+      return {
+        sample_site: document.getElementById('fna_sample_site')?.value.trim() || '',
+        sample_type: collectChecked('fna_type'),
+        sample_other: document.getElementById('fna_sample_other')?.value.trim() || '',
+        slides: document.getElementById('fna_slides')?.value.trim() || '',
+        stain: collectChecked('fna_stain'),
+        stain_other: document.getElementById('fna_stain_other')?.value.trim() || '',
+        cellularity: collectChecked('fna_cellu'),
+        cell_types: collectChecked('fna_cell'),
+        cell_other: document.getElementById('fna_cell_other')?.value.trim() || '',
+        inflam_cells: collectChecked('fna_inflam'),
+        features: collectChecked('fna_feat'),
+        microbes: collectChecked('fna_micro'),
+        microbe_other: document.getElementById('fna_microbe_other')?.value.trim() || '',
+        impression: collectChecked('fna_imp'),
+        comments: document.getElementById('fna_comments')?.value.trim() || '',
+        examined_by: document.getElementById('fna_examined_by')?.value.trim() || '',
+      };
+    }
+
+    function val(id) {
+      return document.getElementById(id)?.value.trim() || '';
+    }
+
+    function collectConsent() {
+      if (!document.getElementById('consentForm')) return LabApp.getConsent();
+      return {
+        owner_name: val('sc_owner_name'),
+        cnic: val('sc_cnic'),
+        address: val('sc_address'),
+        contact: val('sc_contact'),
+        animal_name: val('sc_animal_name'),
+        species: val('sc_species'),
+        breed: val('sc_breed'),
+        sex: val('sc_sex'),
+        age: val('sc_age'),
+        color: val('sc_color'),
+        procedure: val('sc_procedure'),
+        date_of_surgery: val('sc_date_of_surgery'),
+        emergency: document.querySelector('input[name="sc_emergency"]:checked')?.value || '',
+        additional_notes: document.getElementById('sc_additional_notes')?.value.trim() || '',
+        owner_sign_date: val('sc_owner_sign_date'),
+        witness: val('sc_witness'),
+        vet_name: val('sc_vet_name'),
+        vet_qualification: val('sc_vet_qualification'),
+        vet_reg: val('sc_vet_reg'),
+        vet_date: val('sc_vet_date'),
+      };
+    }
+
+    function collectTravel() {
+      if (!document.getElementById('travelForm')) return LabApp.getTravel();
+      return {
+        owner_name: val('tc_owner_name'),
+        cnic: val('tc_cnic'),
+        address: val('tc_address'),
+        contact: val('tc_contact'),
+        species: val('tc_species'),
+        breed: val('tc_breed'),
+        sex: val('tc_sex'),
+        age: val('tc_age'),
+        color: val('tc_color'),
+        microchip: val('tc_microchip'),
+        vaccination: val('tc_vaccination'),
+        deworming: val('tc_deworming'),
+        rabies: val('tc_rabies'),
+        destination: val('tc_destination'),
+        transport: val('tc_transport'),
+        exam_date: val('tc_exam_date'),
+        remarks: document.getElementById('tc_remarks')?.value.trim() || '',
+        vet_name: val('tc_vet_name'),
+        vet_qualification: val('tc_vet_qualification'),
+        vet_reg: val('tc_vet_reg'),
+        issue_date: val('tc_issue_date'),
+      };
+    }
+
     function collectState() {
       const draft = LabApp.getDraft();
       const results = { ...(draft.results || {}) };
@@ -368,6 +795,10 @@
           recommendations: document.getElementById('usRecommendations')?.value.trim() || '',
         };
       }
+      if (hasPanel('BLOOD_PARASITE')) forms.BLOOD_PARASITE = collectBloodParasite();
+      if (hasPanel('FNA_CYTOLOGY')) forms.FNA_CYTOLOGY = collectFna();
+      if (hasPanel('SURGICAL_CONSENT')) forms.SURGICAL_CONSENT = collectConsent();
+      if (hasPanel('TRAVEL_CERT')) forms.TRAVEL_CERT = collectTravel();
 
       return {
         panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
@@ -381,7 +812,11 @@
     }
 
     function hasSkinScraping() {
-      return selectedPanels().some((p) => String(p.code).toUpperCase() === 'SKIN_SCRAPING');
+      return hasPanel('SKIN_SCRAPING');
+    }
+
+    function hasPanel(code) {
+      return selectedPanels().some((p) => String(p.code).toUpperCase() === String(code).toUpperCase());
     }
 
     function persistForm() {
@@ -523,6 +958,50 @@
           </div>`;
         }
 
+        if (code === 'BLOOD_PARASITE') {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${bloodParasiteFormHtml(LabApp.getBloodParasite(draft))}
+          </div>`;
+        }
+
+        if (code === 'FNA_CYTOLOGY') {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${fnaFormHtml(LabApp.getFna(draft))}
+          </div>`;
+        }
+
+        if (code === 'SURGICAL_CONSENT') {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${consentFormHtml(LabApp.getConsent(draft))}
+          </div>`;
+        }
+
+        if (code === 'TRAVEL_CERT') {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${travelFormHtml(LabApp.getTravel(draft))}
+          </div>`;
+        }
+
         return `
         <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
           <div class="result-block-head">
@@ -620,16 +1099,14 @@
         : null;
       let snapshot = (draft.parameter_ids_snapshot || []).map(Number).filter((id) => !paramIds.has(id));
       const patch = { panel_ids, results, included_parameter_ids: included, parameter_ids_snapshot: snapshot };
-      if (panel && String(panel.code).toUpperCase() === 'ULTRASOUND') {
+      const formCode = panel ? String(panel.code).toUpperCase() : '';
+      if (formCode === 'ULTRASOUND') {
         patch.clinical_notes = '';
         patch.images = [];
-        const forms = { ...(draft.forms || {}) };
-        delete forms.ULTRASOUND;
-        patch.forms = forms;
       }
-      if (panel && String(panel.code).toUpperCase() === 'SKIN_SCRAPING') {
+      if (LabApp.isFormPanel(formCode)) {
         const forms = { ...(draft.forms || {}) };
-        delete forms.SKIN_SCRAPING;
+        delete forms[formCode];
         patch.forms = forms;
       }
       LabApp.saveDraft(patch);
