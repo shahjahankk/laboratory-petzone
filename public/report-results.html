@@ -768,26 +768,11 @@
     function crossmatchFormHtml(data) {
       const d = { ...LabApp.emptyCrossmatch(), ...(data || {}) };
       const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
-      const male = String(d.sex || '').toLowerCase().includes('male');
-      const female = String(d.sex || '').toLowerCase().includes('female');
       const donorMale = String(d.donor_sex || '').toLowerCase().includes('male');
       const donorFemale = String(d.donor_sex || '').toLowerCase().includes('female');
       return `
         <div class="skin-editor" id="crossmatchForm">
-          <p class="hint" style="margin-top:0;">Patient details are auto-filled from the report. Clear a field to print a blank line for handwriting. Signatures always print blank.</p>
-
-          <h4>Patient / Recipient Information</h4>
-          <div class="doc-edit-grid">
-            ${field('xm_patient_name', 'Patient Name', d.patient_name)}
-            ${field('xm_species', 'Species', d.species)}
-            ${field('xm_breed', 'Breed', d.breed)}
-            ${sexRadio('xm_sex', 'Sex', male, female, true)}
-            ${field('xm_age', 'Age', d.age)}
-            ${field('xm_weight', 'Weight (kg)', d.weight)}
-            ${field('xm_owner', 'Owner', d.owner)}
-            ${field('xm_diagnosis', 'Diagnosis / Indication for Transfusion', d.diagnosis)}
-            ${field('xm_pcv_hct', 'PCV / HCT (%)', d.pcv_hct)}
-          </div>
+          <p class="hint" style="margin-top:0;">Patient details come from the report header. Donor details are auto-filled below. Clear a field to print a blank line for handwriting. Signatures always print blank.</p>
 
           <h4>Donor Information</h4>
           <div class="doc-edit-grid">
@@ -902,15 +887,6 @@
     function collectCrossmatch() {
       if (!document.getElementById('crossmatchForm')) return LabApp.getCrossmatch();
       return {
-        patient_name: val('xm_patient_name'),
-        species: val('xm_species'),
-        breed: val('xm_breed'),
-        sex: document.querySelector('input[name="xm_sex"]:checked')?.value || '',
-        age: val('xm_age'),
-        weight: val('xm_weight'),
-        owner: val('xm_owner'),
-        diagnosis: val('xm_diagnosis'),
-        pcv_hct: val('xm_pcv_hct'),
         donor_name: val('xm_donor_name'),
         donor_species: val('xm_donor_species'),
         donor_breed: val('xm_donor_breed'),

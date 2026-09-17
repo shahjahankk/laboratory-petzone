@@ -692,15 +692,6 @@ const LabApp = {
 
   emptyCrossmatch() {
     return {
-      patient_name: '',
-      species: '',
-      breed: '',
-      sex: '',
-      age: '',
-      weight: '',
-      owner: '',
-      diagnosis: '',
-      pcv_hct: '',
       donor_name: '',
       donor_species: '',
       donor_breed: '',
@@ -734,12 +725,6 @@ const LabApp = {
     const saved = (d.forms && d.forms.BLOOD_CROSSMATCH) || {};
     return {
       ...this.emptyCrossmatch(),
-      patient_name: d.patient_name || '',
-      species: d.species || '',
-      breed: d.breed || '',
-      sex: d.sex || '',
-      age: d.age || '',
-      owner: d.patient_name || '',
       cross_date: d.report_date || this.today(),
       vet_name: d.referring_vet || '',
       ...saved,
@@ -1049,20 +1034,6 @@ const LabApp = {
     return `
       <section class="skin-form">
         <h2>BLOOD CROSSMATCHING FORM</h2>
-        <div class="skin-section">
-          <h3>Patient / Recipient Information</h3>
-          <div class="doc-grid">
-            <p><strong>Patient Name:</strong> ${this.fillLine(d.patient_name)}</p>
-            <p><strong>Species:</strong> ${speciesTicks(d.species)}</p>
-            <p><strong>Breed:</strong> ${this.fillLine(d.breed)}</p>
-            <p><strong>Sex:</strong> ${sexTicks(d.sex)}</p>
-            <p><strong>Age:</strong> ${this.fillLine(d.age)}</p>
-            <p><strong>Weight:</strong> ${this.fillLine(d.weight)} kg</p>
-            <p><strong>Owner:</strong> ${this.fillLine(d.owner)}</p>
-            <p><strong>PCV/HCT:</strong> ${this.fillLine(d.pcv_hct)} %</p>
-          </div>
-          <p class="doc-span"><strong>Diagnosis / Indication for Transfusion:</strong> ${this.fillLine(d.diagnosis)}</p>
-        </div>
         <div class="skin-section">
           <h3>Donor Information</h3>
           <div class="doc-grid">
