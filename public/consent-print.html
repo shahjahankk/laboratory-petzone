@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blank Consent Form  -  PetZone Laboratory</title>
+  <link rel="stylesheet" href="/api/static/styles.css?v=34">
+</head>
+<body class="print-page">
+  <header class="header no-print">
+    <a class="header-brand" href="/dashboard"><img src="/api/static/img/petzonelogo.png" alt="PetZone" class="logo-lg"><span class="brand-text"><span class="brand-title">PetZone Laboratory</span></span></a>
+    <nav>
+      <a href="/report/new" class="btn btn-outline btn-sm">New Lab Report</a>
+      <button class="btn btn-primary btn-sm" id="printBtn" type="button">Print / Reprint</button>
+    </nav>
+  </header>
+
+  <div class="container print-container">
+    <div id="alert" class="alert alert-error no-print" style="display:none;"></div>
+    <div id="sheet" class="report-sheet report-sheet-pro">Loading consent form...</div>
+  </div>
+
+  <script src="/api/static/app.js?v=34"></script>
+  <script>
+    function renderBlankConsent() {
+      document.title = 'Blank Consent Form - PetZone Laboratory';
+      const dt = LabApp.formatReportDateParts(LabApp.today());
+      const header = LabApp.renderReportHeaderHtml({
+        dt,
+        subtitle: LabApp.docSubtitle('SURGICAL_CONSENT'),
+      });
+      const body = LabApp.renderConsentHtml(LabApp.emptyConsent());
+      document.getElementById('sheet').innerHTML = LabApp.wrapReportPrintPage(header, body, '', true);
+    }
+
+    function doPrint() {
+      window.print();
+    }
+
+    document.getElementById('printBtn').addEventListener('click', doPrint);
+
+    (async () => {
+      const user = await LabApp.requireAuth();
+      if (!user) return;
+      renderBlankConsent();
+      setTimeout(doPrint, 500);
+    })();
+  </script>
+</body>
+</html>

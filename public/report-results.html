@@ -220,6 +220,33 @@
       return `<label><input type="checkbox" name="${name}" value="${value}" ${checked ? 'checked' : ''}> ${label}</label>`;
     }
 
+    function tickGridRadioRow(name, label, options, current) {
+      return `
+        <div class="field-row">
+          <label class="main-label">${label}</label>
+          <div class="tick-grid">
+            ${options.map(([val, text]) =>
+              `<label><input type="radio" name="${name}" value="${val}" ${current === val ? 'checked' : ''}> ${text}</label>`
+            ).join('')}
+          </div>
+        </div>`;
+    }
+
+    function sexRadio(name, label, male, female, span) {
+      return `
+        <div class="field-row" ${span ? 'style="grid-column:1 / -1;"' : ''}>
+          <label class="main-label">${label}</label>
+          <div class="tick-grid">
+            <label><input type="radio" name="${name}" value="Male" ${male ? 'checked' : ''}> Male</label>
+            <label><input type="radio" name="${name}" value="Female" ${female ? 'checked' : ''}> Female</label>
+          </div>
+        </div>`;
+    }
+
+    function singleChecked(arr) {
+      return Array.isArray(arr) && arr.length ? arr[0] : '';
+    }
+
     function skinScrapingFormHtml(data) {
       const d = { ...LabApp.emptySkinScraping(), ...(data || {}) };
       const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
@@ -738,6 +765,113 @@
       };
     }
 
+    function crossmatchFormHtml(data) {
+      const d = { ...LabApp.emptyCrossmatch(), ...(data || {}) };
+      const on = (arr, key) => Array.isArray(arr) && arr.includes(key);
+      const male = String(d.sex || '').toLowerCase().includes('male');
+      const female = String(d.sex || '').toLowerCase().includes('female');
+      const donorMale = String(d.donor_sex || '').toLowerCase().includes('male');
+      const donorFemale = String(d.donor_sex || '').toLowerCase().includes('female');
+      return `
+        <div class="skin-editor" id="crossmatchForm">
+          <p class="hint" style="margin-top:0;">Patient details are auto-filled from the report. Clear a field to print a blank line for handwriting. Signatures always print blank.</p>
+
+          <h4>Patient / Recipient Information</h4>
+          <div class="doc-edit-grid">
+            ${field('xm_patient_name', 'Patient Name', d.patient_name)}
+            ${field('xm_species', 'Species', d.species)}
+            ${field('xm_breed', 'Breed', d.breed)}
+            ${sexRadio('xm_sex', 'Sex', male, female, true)}
+            ${field('xm_age', 'Age', d.age)}
+            ${field('xm_weight', 'Weight (kg)', d.weight)}
+            ${field('xm_owner', 'Owner', d.owner)}
+            ${field('xm_diagnosis', 'Diagnosis / Indication for Transfusion', d.diagnosis)}
+            ${field('xm_pcv_hct', 'PCV / HCT (%)', d.pcv_hct)}
+          </div>
+
+          <h4>Donor Information</h4>
+          <div class="doc-edit-grid">
+            ${field('xm_donor_name', 'Donor Name / ID', d.donor_name)}
+            ${field('xm_donor_species', 'Species', d.donor_species)}
+            ${field('xm_donor_breed', 'Breed', d.donor_breed)}
+            ${sexRadio('xm_donor_sex', 'Sex', donorMale, donorFemale, true)}
+            ${field('xm_donor_age', 'Age', d.donor_age)}
+            ${field('xm_donor_weight', 'Weight (kg)', d.donor_weight)}
+            ${field('xm_donor_pcv_hct', 'PCV / HCT (%)', d.donor_pcv_hct)}
+          </div>
+          <div class="field-row">
+            <label class="main-label">Previous Transfusion</label>
+            <div class="tick-grid">
+              ${tick('xm_donor_prev_transfusion', 'no', 'No', on(d.donor_prev_transfusion, 'no'))}
+              ${tick('xm_donor_prev_transfusion', 'yes', 'Yes', on(d.donor_prev_transfusion, 'yes'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label">Previous Pregnancy</label>
+            <div class="tick-grid">
+              ${tick('xm_donor_prev_pregnancy', 'no', 'No', on(d.donor_prev_pregnancy, 'no'))}
+              ${tick('xm_donor_prev_pregnancy', 'yes', 'Yes', on(d.donor_prev_pregnancy, 'yes'))}
+            </div>
+          </div>
+
+          <h4>MAJOR CROSSMATCH — Recipient Serum/Plasma + Donor RBCs</h4>
+          ${tickGridRadioRow('xm_maj_agg', 'Agglutination', [['negative', 'Negative'], ['positive', 'Positive']], singleChecked(d.maj_agglutination))}
+          ${tickGridRadioRow('xm_maj_hem', 'Hemolysis', [['negative', 'Negative'], ['positive', 'Positive']], singleChecked(d.maj_hemolysis))}
+          ${tickGridRadioRow('xm_maj_comp', 'Overall Compatibility', [['compatible', 'Compatible'], ['incompatible', 'Incompatible']], singleChecked(d.maj_compatibility))}
+          <div class="field-row">
+            <label class="main-label" for="xm_maj_remarks">Reaction / Remarks</label>
+            <textarea id="xm_maj_remarks" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.maj_remarks)}</textarea>
+          </div>
+
+          <h4>MINOR CROSSMATCH — Donor Serum/Plasma + Recipient RBCs</h4>
+          ${tickGridRadioRow('xm_min_agg', 'Agglutination', [['negative', 'Negative'], ['positive', 'Positive']], singleChecked(d.min_agglutination))}
+          ${tickGridRadioRow('xm_min_hem', 'Hemolysis', [['negative', 'Negative'], ['positive', 'Positive']], singleChecked(d.min_hemolysis))}
+          ${tickGridRadioRow('xm_min_comp', 'Overall Compatibility', [['compatible', 'Compatible'], ['incompatible', 'Incompatible']], singleChecked(d.min_compatibility))}
+          <div class="field-row">
+            <label class="main-label" for="xm_min_remarks">Reaction / Remarks</label>
+            <textarea id="xm_min_remarks" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.min_remarks)}</textarea>
+          </div>
+
+          <h4>AUTOCONTROL — Recipient Serum/Plasma + Recipient RBCs</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              ${tick('xm_autocontrol', 'negative', 'Negative', on(d.autocontrol, 'negative'))}
+              ${tick('xm_autocontrol', 'positive', 'Positive', on(d.autocontrol, 'positive'))}
+            </div>
+          </div>
+
+          <h4>FINAL INTERPRETATION</h4>
+          <div class="field-row">
+            <div class="tick-grid">
+              ${tick('xm_final', 'compatible', 'Compatible — Suitable for transfusion', on(d.final_result, 'compatible'))}
+              ${tick('xm_final', 'incompatible', 'Incompatible — Do NOT transfuse', on(d.final_result, 'incompatible'))}
+              ${tick('xm_final', 'questionable', 'Questionable Reaction — Repeat / Re-evaluate', on(d.final_result, 'questionable'))}
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="main-label" for="xm_additional_remarks">Additional Remarks</label>
+            <textarea id="xm_additional_remarks" placeholder="Leave blank for handwriting lines...">${LabApp.escapeHtml(d.additional_remarks)}</textarea>
+          </div>
+
+          <h4>Blood Product &amp; Sign-off</h4>
+          <div class="field-row">
+            <label class="main-label">Blood Product</label>
+            <div class="tick-grid">
+              ${tick('xm_product', 'whole_blood', 'Whole Blood', on(d.blood_product, 'whole_blood'))}
+              ${tick('xm_product', 'packed_rbc', 'Packed RBCs', on(d.blood_product, 'packed_rbc'))}
+              ${tick('xm_product', 'plasma', 'Plasma', on(d.blood_product, 'plasma'))}
+            </div>
+          </div>
+          <div class="doc-edit-grid">
+            ${field('xm_volume', 'Blood Volume (mL)', d.blood_volume)}
+            ${field('xm_date', 'Date', d.cross_date)}
+            ${field('xm_time', 'Time', d.cross_time)}
+            ${field('xm_vet_name', "Veterinarian's Name", d.vet_name)}
+          </div>
+        </div>
+      `;
+    }
+
     function collectTravel() {
       if (!document.getElementById('travelForm')) return LabApp.getTravel();
       return {
@@ -762,6 +896,46 @@
         vet_qualification: val('tc_vet_qualification'),
         vet_reg: val('tc_vet_reg'),
         issue_date: val('tc_issue_date'),
+      };
+    }
+
+    function collectCrossmatch() {
+      if (!document.getElementById('crossmatchForm')) return LabApp.getCrossmatch();
+      return {
+        patient_name: val('xm_patient_name'),
+        species: val('xm_species'),
+        breed: val('xm_breed'),
+        sex: document.querySelector('input[name="xm_sex"]:checked')?.value || '',
+        age: val('xm_age'),
+        weight: val('xm_weight'),
+        owner: val('xm_owner'),
+        diagnosis: val('xm_diagnosis'),
+        pcv_hct: val('xm_pcv_hct'),
+        donor_name: val('xm_donor_name'),
+        donor_species: val('xm_donor_species'),
+        donor_breed: val('xm_donor_breed'),
+        donor_sex: document.querySelector('input[name="xm_donor_sex"]:checked')?.value || '',
+        donor_age: val('xm_donor_age'),
+        donor_weight: val('xm_donor_weight'),
+        donor_pcv_hct: val('xm_donor_pcv_hct'),
+        donor_prev_transfusion: collectChecked('xm_donor_prev_transfusion'),
+        donor_prev_pregnancy: collectChecked('xm_donor_prev_pregnancy'),
+        maj_agglutination: collectChecked('xm_maj_agg'),
+        maj_hemolysis: collectChecked('xm_maj_hem'),
+        maj_compatibility: collectChecked('xm_maj_comp'),
+        maj_remarks: document.getElementById('xm_maj_remarks')?.value.trim() || '',
+        min_agglutination: collectChecked('xm_min_agg'),
+        min_hemolysis: collectChecked('xm_min_hem'),
+        min_compatibility: collectChecked('xm_min_comp'),
+        min_remarks: document.getElementById('xm_min_remarks')?.value.trim() || '',
+        autocontrol: collectChecked('xm_autocontrol'),
+        final_result: collectChecked('xm_final'),
+        additional_remarks: document.getElementById('xm_additional_remarks')?.value.trim() || '',
+        blood_product: collectChecked('xm_product'),
+        blood_volume: val('xm_volume'),
+        cross_date: val('xm_date'),
+        cross_time: val('xm_time'),
+        vet_name: val('xm_vet_name'),
       };
     }
 
@@ -799,6 +973,7 @@
       if (hasPanel('FNA_CYTOLOGY')) forms.FNA_CYTOLOGY = collectFna();
       if (hasPanel('SURGICAL_CONSENT')) forms.SURGICAL_CONSENT = collectConsent();
       if (hasPanel('TRAVEL_CERT')) forms.TRAVEL_CERT = collectTravel();
+      if (hasPanel('BLOOD_CROSSMATCH')) forms.BLOOD_CROSSMATCH = collectCrossmatch();
 
       return {
         panel_ids: (draft.panel_ids || []).map(Number).filter(Boolean),
@@ -999,6 +1174,17 @@
               <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
             </div>
             ${travelFormHtml(LabApp.getTravel(draft))}
+          </div>`;
+        }
+
+        if (code === 'BLOOD_CROSSMATCH') {
+          return `
+          <div class="result-block" data-panel-id="${panel.id}" data-panel-code="${LabApp.escapeHtml(panel.code)}">
+            <div class="result-block-head">
+              <h3>${LabApp.escapeHtml(panel.name || panel.code)}</h3>
+              <button type="button" class="btn-remove-panel" data-remove-panel="${panel.id}" title="Remove this panel">Remove</button>
+            </div>
+            ${crossmatchFormHtml(LabApp.getCrossmatch(draft))}
           </div>`;
         }
 

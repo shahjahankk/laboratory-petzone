@@ -130,6 +130,7 @@ app.get('/login', (req, res) => sendPublic(res, 'login.html'));
 app.get('/dashboard', (req, res) => sendPublic(res, 'dashboard.html'));
 app.get('/templates', (req, res) => sendPublic(res, 'templates-admin.html'));
 
+app.get('/consent/print', (req, res) => sendPublic(res, 'consent-print.html'));
 app.get('/report/new/tests', (req, res) => sendPublic(res, 'report-tests.html'));
 app.get('/report/new/results', (req, res) => sendPublic(res, 'report-results.html'));
 app.get('/report/new/preview', (req, res) => sendPublic(res, 'report-preview.html'));

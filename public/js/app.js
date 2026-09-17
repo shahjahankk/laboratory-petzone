@@ -514,7 +514,7 @@ const LabApp = {
     `;
   },
 
-  FORM_PANEL_CODES: ['SKIN_SCRAPING', 'ULTRASOUND', 'BLOOD_PARASITE', 'FNA_CYTOLOGY', 'SURGICAL_CONSENT', 'TRAVEL_CERT'],
+  FORM_PANEL_CODES: ['SKIN_SCRAPING', 'ULTRASOUND', 'BLOOD_PARASITE', 'FNA_CYTOLOGY', 'SURGICAL_CONSENT', 'TRAVEL_CERT', 'BLOOD_CROSSMATCH'],
   DOC_PANEL_CODES: ['SURGICAL_CONSENT', 'TRAVEL_CERT'],
 
   isFormPanel(code) {
@@ -686,6 +686,62 @@ const LabApp = {
       exam_date: d.sample_date || d.report_date || this.today(),
       vet_name: d.referring_vet || '',
       issue_date: d.report_date || this.today(),
+      ...saved,
+    };
+  },
+
+  emptyCrossmatch() {
+    return {
+      patient_name: '',
+      species: '',
+      breed: '',
+      sex: '',
+      age: '',
+      weight: '',
+      owner: '',
+      diagnosis: '',
+      pcv_hct: '',
+      donor_name: '',
+      donor_species: '',
+      donor_breed: '',
+      donor_sex: '',
+      donor_age: '',
+      donor_weight: '',
+      donor_pcv_hct: '',
+      donor_prev_transfusion: [],
+      donor_prev_pregnancy: [],
+      maj_agglutination: [],
+      maj_hemolysis: [],
+      maj_compatibility: [],
+      maj_remarks: '',
+      min_agglutination: [],
+      min_hemolysis: [],
+      min_compatibility: [],
+      min_remarks: '',
+      autocontrol: [],
+      final_result: [],
+      additional_remarks: '',
+      blood_product: [],
+      blood_volume: '',
+      cross_date: '',
+      cross_time: '',
+      vet_name: '',
+    };
+  },
+
+  getCrossmatch(draft) {
+    const d = draft || this.getDraft();
+    const saved = (d.forms && d.forms.BLOOD_CROSSMATCH) || {};
+    return {
+      ...this.emptyCrossmatch(),
+      patient_name: d.patient_name || '',
+      species: d.species || '',
+      breed: d.breed || '',
+      sex: d.sex || '',
+      age: d.age || '',
+      owner: d.patient_name || '',
+      cross_date: d.report_date || this.today(),
+      vet_name: d.referring_vet || '',
       ...saved,
     };
   },
@@ -976,6 +1032,102 @@ const LabApp = {
     `;
   },
 
+  renderCrossmatchHtml(data) {
+    const d = { ...this.emptyCrossmatch(), ...(data || {}) };
+    const has = (arr, key) => Array.isArray(arr) && arr.includes(key);
+    const m = (arr, key) => this.mark(has(arr, key));
+    const isSex = (s, male) => {
+      const v = String(s || '').toLowerCase();
+      return male ? v.includes('male') : v.includes('female');
+    };
+    const sexTicks = (val) => `${this.mark(isSex(val, true))} Male &nbsp; ${this.mark(isSex(val, false))} Female`;
+    const speciesTicks = (val) => `${this.mark(String(val || '') === 'Cat')} Cat &nbsp; ${this.mark(String(val || '') === 'Dog')} Dog`;
+    const yesNo = (arr) => `${m(arr, 'no')} No &nbsp; ${m(arr, 'yes')} Yes`;
+    const negPos = (arr) => `${m(arr, 'negative')} Negative &nbsp; ${m(arr, 'positive')} Positive`;
+    const compat = (arr) => `${m(arr, 'compatible')} Compatible &nbsp; ${m(arr, 'incompatible')} Incompatible`;
+
+    return `
+      <section class="skin-form">
+        <h2>BLOOD CROSSMATCHING FORM</h2>
+        <div class="skin-section">
+          <h3>Patient / Recipient Information</h3>
+          <div class="doc-grid">
+            <p><strong>Patient Name:</strong> ${this.fillLine(d.patient_name)}</p>
+            <p><strong>Species:</strong> ${speciesTicks(d.species)}</p>
+            <p><strong>Breed:</strong> ${this.fillLine(d.breed)}</p>
+            <p><strong>Sex:</strong> ${sexTicks(d.sex)}</p>
+            <p><strong>Age:</strong> ${this.fillLine(d.age)}</p>
+            <p><strong>Weight:</strong> ${this.fillLine(d.weight)} kg</p>
+            <p><strong>Owner:</strong> ${this.fillLine(d.owner)}</p>
+            <p><strong>PCV/HCT:</strong> ${this.fillLine(d.pcv_hct)} %</p>
+          </div>
+          <p class="doc-span"><strong>Diagnosis / Indication for Transfusion:</strong> ${this.fillLine(d.diagnosis)}</p>
+        </div>
+        <div class="skin-section">
+          <h3>Donor Information</h3>
+          <div class="doc-grid">
+            <p><strong>Donor Name / ID:</strong> ${this.fillLine(d.donor_name)}</p>
+            <p><strong>Species:</strong> ${speciesTicks(d.donor_species)}</p>
+            <p><strong>Breed:</strong> ${this.fillLine(d.donor_breed)}</p>
+            <p><strong>Sex:</strong> ${sexTicks(d.donor_sex)}</p>
+            <p><strong>Age:</strong> ${this.fillLine(d.donor_age)}</p>
+            <p><strong>Weight:</strong> ${this.fillLine(d.donor_weight)} kg</p>
+            <p><strong>PCV/HCT:</strong> ${this.fillLine(d.donor_pcv_hct)} %</p>
+            <p><strong>Previous Transfusion:</strong> ${yesNo(d.donor_prev_transfusion)}</p>
+            <p><strong>Previous Pregnancy:</strong> ${yesNo(d.donor_prev_pregnancy)}</p>
+          </div>
+        </div>
+        <div class="skin-section">
+          <h3>Major Crossmatch — Recipient Serum/Plasma + Donor RBCs</h3>
+          <p><strong>Agglutination:</strong> ${negPos(d.maj_agglutination)}</p>
+          <p><strong>Hemolysis:</strong> ${negPos(d.maj_hemolysis)}</p>
+          <p><strong>Overall Compatibility:</strong> ${compat(d.maj_compatibility)}</p>
+          <p><strong>Reaction / Remarks:</strong></p>
+          ${this.fillBlock(d.maj_remarks, 2)}
+        </div>
+        <div class="skin-section">
+          <h3>Minor Crossmatch — Donor Serum/Plasma + Recipient RBCs</h3>
+          <p><strong>Agglutination:</strong> ${negPos(d.min_agglutination)}</p>
+          <p><strong>Hemolysis:</strong> ${negPos(d.min_hemolysis)}</p>
+          <p><strong>Overall Compatibility:</strong> ${compat(d.min_compatibility)}</p>
+          <p><strong>Reaction / Remarks:</strong></p>
+          ${this.fillBlock(d.min_remarks, 2)}
+        </div>
+        <div class="skin-section">
+          <h3>Autocontrol — Recipient Serum/Plasma + Recipient RBCs</h3>
+          <p>${negPos(d.autocontrol)}</p>
+        </div>
+        <div class="skin-section">
+          <h3>Final Interpretation</h3>
+          <div class="tick-row">
+            <span>${m(d.final_result, 'compatible')} Compatible — Suitable for transfusion</span>
+            <span>${m(d.final_result, 'incompatible')} Incompatible — Do NOT transfuse</span>
+            <span>${m(d.final_result, 'questionable')} Questionable Reaction — Repeat / Re-evaluate</span>
+          </div>
+          <p><strong>Additional Remarks:</strong></p>
+          ${this.fillBlock(d.additional_remarks, 2)}
+        </div>
+        <div class="skin-section">
+          <h3>Blood Product</h3>
+          <p><strong>Product:</strong>
+            ${m(d.blood_product, 'whole_blood')} Whole Blood
+            &nbsp; ${m(d.blood_product, 'packed_rbc')} Packed RBCs
+            &nbsp; ${m(d.blood_product, 'plasma')} Plasma
+          </p>
+          <p><strong>Blood Volume:</strong> ${this.fillLine(d.blood_volume)} mL</p>
+          <div class="doc-grid">
+            <p><strong>Date:</strong> ${this.fillLine(d.cross_date)}</p>
+            <p><strong>Time:</strong> ${this.fillLine(d.cross_time)}</p>
+          </div>
+          <div class="doc-grid">
+            <p><strong>Veterinarian:</strong> ${this.fillLine(d.vet_name)}</p>
+            <p><strong>Signature &amp; Stamp:</strong> <span class="blank-line wide"></span></p>
+          </div>
+        </div>
+      </section>
+    `;
+  },
+
   renderSpecialPanelHtml(code, draftOrReport) {
     const c = String(code || '').toUpperCase();
     const forms = (draftOrReport && draftOrReport.forms) || {};
@@ -985,6 +1137,7 @@ const LabApp = {
     if (c === 'FNA_CYTOLOGY') return this.renderFnaHtml(this.getFna(draftOrReport));
     if (c === 'SURGICAL_CONSENT') return this.renderConsentHtml(this.getConsent(draftOrReport));
     if (c === 'TRAVEL_CERT') return this.renderTravelHtml(this.getTravel(draftOrReport));
+    if (c === 'BLOOD_CROSSMATCH') return this.renderCrossmatchHtml(this.getCrossmatch(draftOrReport));
     return '';
   },
 
